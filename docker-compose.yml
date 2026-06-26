@@ -1,0 +1,12 @@
+services:
+  mysql-store-tracker:
+    image: mysql:8.0
+    container_name: mysql-store-tracker
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: store_price_track
+    ports:
+      - "3307:3306" # Note que mudamos a porta externa para 3307
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d # Executa seus scripts SQL automaticamente
+    restart: always
