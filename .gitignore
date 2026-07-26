@@ -4,6 +4,9 @@ target/
 ### Local DB scripts ###
 primeiroBanco.sql
 
+### Environment secrets ###
+.env
+
 ### IntelliJ IDEA ###
 out/
 !**/src/main/**/out/
