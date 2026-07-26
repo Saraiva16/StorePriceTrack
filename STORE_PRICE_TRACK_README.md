@@ -308,18 +308,20 @@ spring.jackson.property-naming-strategy=SNAKE_CASE
 
 ## 🗂️ Roadmap de Desenvolvimento
 
-### 🔄 Fase 1: Estrutura Base e Importação (EM PROGRESSO)
+### ✅ Fase 1: Estrutura Base e Importação (CONCLUÍDA)
 
 - [x] Modelo de dados (5 tabelas)
 - [x] Entities JPA (Market, Category, ProductMaster, Receipt, ReceiptItem)
 - [x] Repositories JPA
 - [x] Configuração de datasource e Jackson SNAKE_CASE
-- [ ] DTOs de Market, Category e ProductMaster
-- [ ] MarketsService (find-or-create)
-- [ ] ReceiptImportService (orquestração completa)
-- [ ] ReceiptImportController (endpoint POST /api/receipts/import)
+- [x] DTOs de Market, Category e ProductMaster
+- [x] MarketsService (find-or-create por CNPJ)
+- [x] ReceiptImportService (orquestração completa via Google AI Studio/Gemini)
+- [x] ReceiptImportController (endpoint POST /api/receipts/import)
 
-### 🔄 Fase 2: Serviços de Consulta e Histórico (EM PROGRESSO)
+> Nota: o `product_id` dos itens do recibo fica nulo por enquanto — a normalização/match de produtos é escopo da Fase 3.
+
+### ⏳ Fase 2: Serviços de Consulta e Histórico (PLANEJADA)
 
 - [ ] **ReceiptsService**
   - Listar recibos por mercado
@@ -333,7 +335,7 @@ spring.jackson.property-naming-strategy=SNAKE_CASE
   - Variação de preço (min/max/média)
   - Top produtos mais comprados
 
-### 🔄 Fase 3: Normalização de Produtos (EM PROGRESSO)
+### ⏳ Fase 3: Normalização de Produtos (PLANEJADA)
 
 - [ ] **ProductsMasterService**
   - Listar todos os produtos

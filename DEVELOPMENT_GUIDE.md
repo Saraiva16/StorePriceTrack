@@ -55,7 +55,7 @@
 
 | Método | Endpoint | Descrição | Status |
 |--------|----------|-----------|--------|
-| POST | `/api/receipts/import` | Importar novo recibo | ⏳ TODO |
+| POST | `/api/receipts/import` | Importar novo recibo | ✅ DONE |
 | GET | `/api/receipts` | Listar recibos com filtros | ⏳ TODO |
 | GET | `/api/receipts/{id}` | Detalhe de um recibo | ⏳ TODO |
 | GET | `/api/receipts/market/{marketId}` | Recibos por mercado | ⏳ TODO |
