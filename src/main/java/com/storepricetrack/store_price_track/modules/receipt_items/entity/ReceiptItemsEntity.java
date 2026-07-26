@@ -27,7 +27,7 @@ public class ReceiptItemsEntity {
     private ProductsMasterEntity product;
 
     @Column(name = "original_name_on_receipt", length = 255, nullable = false)
-    private String orignalNameOnReceipt;
+    private String originalNameOnReceipt;
 
     @Column(nullable = false, precision = 12, scale = 3)
     private BigDecimal quantity;

@@ -10,7 +10,7 @@ import java.util.Optional;
 @Repository
 public interface MarketsRepository extends JpaRepository<MarketsEntity, Long> {
 
-    Optional<MarketsEntity> findById(String cnpj);
+    Optional<MarketsEntity> findByCnpj(String cnpj);
 
     List<MarketsEntity> findByNameContainingIgnoreCase(String name);
 }
