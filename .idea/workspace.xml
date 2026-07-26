@@ -5,13 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a754688c-69bb-45a3-859b-bc0b956fc4dd" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/primeiroBanco.sql" beforeDir="false" afterPath="$PROJECT_DIR$/primeiroBanco.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/storepricetrack/store_price_track/modules/markets/repository/MarketsRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/storepricetrack/store_price_track/modules/markets/repository/MarketsRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/storepricetrack/store_price_track/modules/receipt_items/dto/ReceiptItemDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/storepricetrack/store_price_track/modules/receipt_items/dto/ReceiptItemDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/storepricetrack/store_price_track/modules/receipt_items/entity/ReceiptItemsEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/storepricetrack/store_price_track/modules/receipt_items/entity/ReceiptItemsEntity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/storepricetrack/store_price_track/modules/receipts/repository/ReceiptsRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/storepricetrack/store_price_track/modules/receipts/repository/ReceiptsRepository.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,18 +53,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feat/criando-estrutura-base&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.editor&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "feat/fase-2-consultas-historico",
+    "kotlin-language-version-configured": "true",
+    "settings.editor.selected.configurable": "preferences.editor"
+  },
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
+    ]
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
