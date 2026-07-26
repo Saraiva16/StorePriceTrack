@@ -1,4 +1,18 @@
+### Maven ###
+target/
+
+### Local DB scripts ###
+primeiroBanco.sql
+
+### Environment secrets ###
+.env
+
 ### IntelliJ IDEA ###
+.idea/dataSources.xml
+.idea/dataSources.local.xml
+.idea/dataSources/
+.idea/data_source_mapping.xml
+.idea/sqlDataSources.xml
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
