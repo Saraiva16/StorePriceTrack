@@ -32,7 +32,7 @@ public class ReceiptsEntity {
     @Column(name = "image_url", length = 512)
     private String imageUrl;
 
-    @Column(name = "access_key", length = 44, unique = true)
+    @Column(name = "access_key", columnDefinition = "CHAR(44)", unique = true)
     private String accessKey;
 
     @Column(name = "created_at", updatable = false)
