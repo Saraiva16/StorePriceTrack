@@ -8,6 +8,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class CategoriesService implements ICategoriesService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "categories", key = "#pageable")
     public Page<CategoryDTO> findAll(Pageable pageable) {
         log.debug("Fetching categories page {}", pageable);
         return repository.findAll(pageable).map(this::toDTO);
@@ -39,6 +42,7 @@ public class CategoriesService implements ICategoriesService {
     }
 
     @Override
+    @CacheEvict(value = "categories", allEntries = true)
     public CategoryDTO create(String name) {
         if (repository.findByName(name).isPresent()) {
             throw new DuplicateCategoryException("Category already exists with name: " + name);
@@ -50,6 +54,7 @@ public class CategoriesService implements ICategoriesService {
     }
 
     @Override
+    @CacheEvict(value = "categories", allEntries = true)
     public CategoryDTO update(Long id, String name) {
         CategoriesEntity entity = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
@@ -64,6 +69,7 @@ public class CategoriesService implements ICategoriesService {
     }
 
     @Override
+    @CacheEvict(value = "categories", allEntries = true)
     public void delete(Long id) {
         if (!repository.existsById(id)) {
             throw new EntityNotFoundException("Category not found with id: " + id);

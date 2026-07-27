@@ -8,6 +8,7 @@ import com.storepricetrack.store_price_track.modules.reports.dto.PurchasePattern
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class BestDayAnalysisService implements IBestDayAnalysisService {
     private final ReceiptsRepository receiptsRepository;
 
     @Override
+    @Cacheable("bestShoppingDays")
     public List<BestDayDTO> getBestDaysToBuy() {
         log.debug("Calculating best days to buy based on price deviation from each product's average");
         List<ReceiptItemsEntity> items = receiptItemsRepository.findByProductIsNotNull();
@@ -56,6 +58,7 @@ public class BestDayAnalysisService implements IBestDayAnalysisService {
     }
 
     @Override
+    @Cacheable("purchasePattern")
     public List<PurchasePatternDTO> getPurchasePattern() {
         log.debug("Calculating purchase pattern by day of week");
         Map<DayOfWeek, Long> countByDay = receiptsRepository.findAll().stream()

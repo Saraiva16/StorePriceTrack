@@ -18,6 +18,8 @@ import com.storepricetrack.store_price_track.modules.receipts.repository.Receipt
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,6 +46,16 @@ public class ReceiptImportService implements IReceiptImportService {
     private final ProductsMasterRepository productsMasterRepository;
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "priceStats", allEntries = true),
+            @CacheEvict(value = "topProducts", allEntries = true),
+            @CacheEvict(value = "priceTrend", allEntries = true),
+            @CacheEvict(value = "marketComparison", allEntries = true),
+            @CacheEvict(value = "cheapestProducts", allEntries = true),
+            @CacheEvict(value = "mostExpensiveProducts", allEntries = true),
+            @CacheEvict(value = "bestShoppingDays", allEntries = true),
+            @CacheEvict(value = "purchasePattern", allEntries = true)
+    })
     public ReceiptResponseDTO importReceipt(MultipartFile file) {
         if (file.isEmpty()) {
             throw new ReceiptExtractionException("Arquivo de imagem vazio");

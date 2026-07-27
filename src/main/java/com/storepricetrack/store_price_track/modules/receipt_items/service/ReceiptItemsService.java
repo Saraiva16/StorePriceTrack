@@ -7,6 +7,7 @@ import com.storepricetrack.store_price_track.modules.receipt_items.repository.Re
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +35,7 @@ public class ReceiptItemsService implements IReceiptItemsService {
     }
 
     @Override
+    @Cacheable(value = "priceStats", key = "#productId")
     public PriceStatsDTO getPriceStats(Long productId) {
         log.debug("Calculating price stats for product {}", productId);
         BigDecimal min = receiptItemsRepository.findMinUnitPriceByProductId(productId).orElse(null);
@@ -45,6 +47,7 @@ public class ReceiptItemsService implements IReceiptItemsService {
     }
 
     @Override
+    @Cacheable(value = "topProducts", key = "#limit")
     public List<TopProductDTO> getTopProducts(int limit) {
         log.debug("Fetching top {} products", limit);
         return receiptItemsRepository.findTopProducts(PageRequest.of(0, limit));
