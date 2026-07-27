@@ -8,6 +8,9 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,9 +32,10 @@ public class ReceiptItemsController {
     private final IReceiptItemsService receiptItemsService;
 
     @GetMapping("/product/{productId}")
-    public ResponseEntity<List<ReceiptItemDTO>> getByProduct(@PathVariable Long productId) {
-        log.info("GET /api/receipt-items/product/{}", productId);
-        return ResponseEntity.ok(receiptItemsService.findByProduct(productId));
+    public ResponseEntity<PagedModel<ReceiptItemDTO>> getByProduct(
+            @PathVariable Long productId, @PageableDefault(size = 20) Pageable pageable) {
+        log.info("GET /api/receipt-items/product/{} - {}", productId, pageable);
+        return ResponseEntity.ok(new PagedModel<>(receiptItemsService.findByProduct(productId, pageable)));
     }
 
     @GetMapping("/product/{productId}/price-stats")

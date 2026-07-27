@@ -2,6 +2,7 @@ package com.storepricetrack.store_price_track.modules.receipt_items.repository;
 
 import com.storepricetrack.store_price_track.modules.receipt_items.dto.TopProductDTO;
 import com.storepricetrack.store_price_track.modules.receipt_items.entity.ReceiptItemsEntity;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,8 @@ public interface ReceiptItemsRepository extends JpaRepository<ReceiptItemsEntity
     List<ReceiptItemsEntity> findByReceiptId(Long receiptId);
 
     List<ReceiptItemsEntity> findByProductId(Long productId);
+
+    Page<ReceiptItemsEntity> findByProductId(Long productId, Pageable pageable);
 
     List<ReceiptItemsEntity> findByProductIsNotNull();
 

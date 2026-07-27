@@ -1,17 +1,18 @@
 package com.storepricetrack.store_price_track.modules.receipts.service;
 
 import com.storepricetrack.store_price_track.modules.receipts.dto.ReceiptResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public interface IReceiptsService {
 
-    List<ReceiptResponseDTO> findByMarket(Long marketId);
+    Page<ReceiptResponseDTO> findByMarket(Long marketId, Pageable pageable);
 
-    List<ReceiptResponseDTO> findByPeriod(LocalDateTime start, LocalDateTime end);
+    Page<ReceiptResponseDTO> findByPeriod(LocalDateTime start, LocalDateTime end, Pageable pageable);
 
     ReceiptResponseDTO getById(Long id);
 
-    List<ReceiptResponseDTO> getRecent(int months);
+    Page<ReceiptResponseDTO> getRecent(int months, Pageable pageable);
 }

@@ -12,6 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,6 +24,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -76,10 +80,12 @@ class ReceiptsServiceTest {
 
     @Test
     void getRecent_delegatesToRepositoryWithComputedDateRange() {
-        when(receiptsRepository.findByPurchaseDateBetween(any(), any())).thenReturn(List.of());
+        Pageable pageable = PageRequest.of(0, 10);
+        when(receiptsRepository.findByPurchaseDateBetween(any(), any(), eq(pageable))).thenReturn(Page.empty());
 
-        service.getRecent(3);
+        service.getRecent(3, pageable);
 
-        verify(receiptsRepository).findByPurchaseDateBetween(any(LocalDateTime.class), any(LocalDateTime.class));
+        verify(receiptsRepository)
+                .findByPurchaseDateBetween(any(LocalDateTime.class), any(LocalDateTime.class), eq(pageable));
     }
 }

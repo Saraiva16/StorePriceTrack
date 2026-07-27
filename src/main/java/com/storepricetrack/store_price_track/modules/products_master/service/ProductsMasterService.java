@@ -9,10 +9,10 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @Transactional
@@ -26,9 +26,9 @@ public class ProductsMasterService implements IProductsMasterService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductMasterDTO> findAll() {
-        log.debug("Fetching all products");
-        return repository.findAll().stream().map(this::toDTO).toList();
+    public Page<ProductMasterDTO> findAll(Pageable pageable) {
+        log.debug("Fetching products page {}", pageable);
+        return repository.findAll(pageable).map(this::toDTO);
     }
 
     @Override
@@ -62,11 +62,9 @@ public class ProductsMasterService implements IProductsMasterService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductMasterDTO> findByNamePattern(String pattern) {
+    public Page<ProductMasterDTO> findByNamePattern(String pattern, Pageable pageable) {
         log.debug("Searching products by name pattern: {}", pattern);
-        return repository.findByNormalizedNameContainingIgnoreCase(pattern).stream()
-                .map(this::toDTO)
-                .toList();
+        return repository.findByNormalizedNameContainingIgnoreCase(pattern, pageable).map(this::toDTO);
     }
 
     private CategoriesEntity resolveCategory(Long categoryId) {

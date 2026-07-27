@@ -1,12 +1,12 @@
 package com.storepricetrack.store_price_track.modules.categories.service;
 
 import com.storepricetrack.store_price_track.modules.categories.dto.CategoryDTO;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface ICategoriesService {
 
-    List<CategoryDTO> findAll();
+    Page<CategoryDTO> findAll(Pageable pageable);
 
     CategoryDTO getById(Long id);
 

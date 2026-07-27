@@ -9,6 +9,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -34,9 +36,9 @@ public class CategoriesController {
     private final ICategoriesService categoriesService;
 
     @GetMapping
-    public ResponseEntity<List<CategoryDTO>> getAll() {
-        log.info("GET /api/categories");
-        return ResponseEntity.ok(categoriesService.findAll());
+    public ResponseEntity<PagedModel<CategoryDTO>> getAll(@PageableDefault(size = 20) Pageable pageable) {
+        log.info("GET /api/categories - {}", pageable);
+        return ResponseEntity.ok(new PagedModel<>(categoriesService.findAll(pageable)));
     }
 
     @GetMapping("/{id}")

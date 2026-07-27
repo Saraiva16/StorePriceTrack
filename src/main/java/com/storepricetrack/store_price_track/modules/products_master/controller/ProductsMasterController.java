@@ -9,6 +9,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -34,12 +37,13 @@ public class ProductsMasterController {
     private final IProductsMasterService productsMasterService;
 
     @GetMapping
-    public ResponseEntity<List<ProductMasterDTO>> getAll(@RequestParam(required = false) String name) {
-        log.info("GET /api/products - name: {}", name);
-        if (name != null && !name.isBlank()) {
-            return ResponseEntity.ok(productsMasterService.findByNamePattern(name));
-        }
-        return ResponseEntity.ok(productsMasterService.findAll());
+    public ResponseEntity<PagedModel<ProductMasterDTO>> getAll(
+            @RequestParam(required = false) String name, @PageableDefault(size = 20) Pageable pageable) {
+        log.info("GET /api/products - name: {}, {}", name, pageable);
+        Page<ProductMasterDTO> page = (name != null && !name.isBlank())
+                ? productsMasterService.findByNamePattern(name, pageable)
+                : productsMasterService.findAll(pageable);
+        return ResponseEntity.ok(new PagedModel<>(page));
     }
 
     @GetMapping("/{id}")
