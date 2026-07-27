@@ -28,7 +28,7 @@ public class ReceiptItemsService implements IReceiptItemsService {
     public List<ReceiptItemDTO> findByProduct(Long productId) {
         log.debug("Fetching receipt items for product {}", productId);
         return receiptItemsRepository.findByProductId(productId).stream()
-                .map(i -> new ReceiptItemDTO(i.getOriginalNameOnReceipt(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice()))
+                .map(i -> new ReceiptItemDTO(i.getOriginalNameOnReceipt(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice(), productId))
                 .toList();
     }
 

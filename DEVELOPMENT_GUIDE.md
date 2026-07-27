@@ -64,7 +64,7 @@
 | GET | `/api/receipt-items/product/{productId}/price-stats` | Min/média/máx de preço | ✅ DONE |
 | GET | `/api/receipt-items/top-products?limit=` | Top produtos mais comprados | ✅ DONE |
 
-### Fase 3 (Em progresso — falta normalização automática)
+### Fase 3 (Concluída)
 
 | Método | Endpoint | Descrição | Status |
 |--------|----------|-----------|--------|
@@ -77,7 +77,8 @@
 | POST | `/api/categories` | Criar categoria | ✅ DONE |
 | PUT | `/api/categories/{id}` | Atualizar categoria | ✅ DONE |
 | DELETE | `/api/categories/{id}` | Remover categoria | ✅ DONE |
-| — | Normalização automática de produtos | Detectar duplicados, mapear nome do recibo → produto | ⏳ TODO |
+| — | Normalização automática (import) | Match exato de alta confiança: mapeia nome bruto do recibo → produto já visto | ✅ DONE |
+| — | Detecção de produtos duplicados / sugestão de agrupamento | Ferramenta de qualidade de dados, escopo separado | ⏳ TODO |
 
 ### Fase 4 (Análise)
 

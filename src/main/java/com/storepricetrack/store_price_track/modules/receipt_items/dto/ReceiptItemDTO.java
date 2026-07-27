@@ -6,5 +6,6 @@ public record ReceiptItemDTO(
         String originalName,
         BigDecimal quantity,
         BigDecimal unitPrice,
-        BigDecimal totalPrice) {
+        BigDecimal totalPrice,
+        Long productId) {
 }
