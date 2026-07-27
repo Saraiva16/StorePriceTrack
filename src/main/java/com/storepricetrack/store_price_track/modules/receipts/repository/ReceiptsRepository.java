@@ -16,4 +16,6 @@ public interface ReceiptsRepository  extends JpaRepository<ReceiptsEntity, Long>
     List<ReceiptsEntity> findByMarketId(Long marketId);
 
     List<ReceiptsEntity> findByMarketIdAndPurchaseDateBetween(Long marketId, LocalDateTime start, LocalDateTime end);
+
+    List<ReceiptsEntity> findByPurchaseDateBetween(LocalDateTime start, LocalDateTime end);
 }

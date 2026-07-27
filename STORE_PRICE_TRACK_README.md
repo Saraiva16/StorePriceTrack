@@ -321,29 +321,29 @@ spring.jackson.property-naming-strategy=SNAKE_CASE
 
 > Nota: o `product_id` dos itens do recibo fica nulo por enquanto — a normalização/match de produtos é escopo da Fase 3.
 
-### ⏳ Fase 2: Serviços de Consulta e Histórico (PLANEJADA)
+### ✅ Fase 2: Serviços de Consulta e Histórico (CONCLUÍDA)
 
-- [ ] **ReceiptsService**
+- [x] **ReceiptsService**
   - Listar recibos por mercado
   - Listar recibos por período
   - Obter detalhes de um recibo
   - Histórico de compras (últimos N meses)
 
-- [ ] **ReceiptItemsService**
+- [x] **ReceiptItemsService**
   - Filtrar itens por produto
   - Calcular preço médio histórico
   - Variação de preço (min/max/média)
   - Top produtos mais comprados
 
-### ⏳ Fase 3: Normalização de Produtos (PLANEJADA)
+### 🔄 Fase 3: Normalização de Produtos (EM PROGRESSO)
 
-- [ ] **ProductsMasterService**
+- [x] **ProductsMasterService**
   - Listar todos os produtos
   - Criar produto manualmente
   - Atualizar categoria de produto
   - Buscar produtos por padrão de nome
 
-- [ ] **CategoriesService**
+- [x] **CategoriesService**
   - CRUD de categorias
   - Manter lista padrão de categorias
 
