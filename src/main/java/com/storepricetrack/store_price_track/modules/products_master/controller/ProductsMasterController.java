@@ -2,8 +2,10 @@ package com.storepricetrack.store_price_track.modules.products_master.controller
 
 import com.storepricetrack.store_price_track.modules.products_master.dto.ProductMasterDTO;
 import com.storepricetrack.store_price_track.modules.products_master.dto.ProductMasterRequestDTO;
+import com.storepricetrack.store_price_track.modules.products_master.dto.UpdateProductCategoryRequestDTO;
 import com.storepricetrack.store_price_track.modules.products_master.service.IProductsMasterService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +49,7 @@ public class ProductsMasterController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductMasterDTO> create(@RequestBody ProductMasterRequestDTO request) {
+    public ResponseEntity<ProductMasterDTO> create(@Valid @RequestBody ProductMasterRequestDTO request) {
         log.info("POST /api/products - normalizedName: {}", request.normalizedName());
         ProductMasterDTO created = productsMasterService.create(
                 request.normalizedName(), request.brand(), request.unitMeasure(), request.categoryId());
@@ -55,9 +57,10 @@ public class ProductsMasterController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductMasterDTO> updateCategory(@PathVariable Long id, @RequestBody Map<String, Long> body) {
-        log.info("PUT /api/products/{} - categoryId: {}", id, body.get("categoryId"));
-        return ResponseEntity.ok(productsMasterService.updateCategory(id, body.get("categoryId")));
+    public ResponseEntity<ProductMasterDTO> updateCategory(
+            @PathVariable Long id, @RequestBody UpdateProductCategoryRequestDTO request) {
+        log.info("PUT /api/products/{} - categoryId: {}", id, request.categoryId());
+        return ResponseEntity.ok(productsMasterService.updateCategory(id, request.categoryId()));
     }
 
     @ExceptionHandler(EntityNotFoundException.class)

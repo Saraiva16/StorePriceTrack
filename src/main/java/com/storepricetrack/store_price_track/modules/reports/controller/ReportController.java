@@ -7,10 +7,12 @@ import com.storepricetrack.store_price_track.modules.reports.dto.ProductPriceDTO
 import com.storepricetrack.store_price_track.modules.reports.dto.PurchasePatternDTO;
 import com.storepricetrack.store_price_track.modules.reports.service.IBestDayAnalysisService;
 import com.storepricetrack.store_price_track.modules.reports.service.IPriceAnalysisService;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,6 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
+@Validated
 public class ReportController {
 
     private static final Logger log = LoggerFactory.getLogger(ReportController.class);
@@ -41,13 +44,15 @@ public class ReportController {
     }
 
     @GetMapping("/products/cheapest")
-    public ResponseEntity<List<ProductPriceDTO>> getCheapestProducts(@RequestParam(defaultValue = "10") int limit) {
+    public ResponseEntity<List<ProductPriceDTO>> getCheapestProducts(
+            @RequestParam(defaultValue = "10") @Min(value = 1, message = "deve ser no mínimo 1") int limit) {
         log.info("GET /api/reports/products/cheapest - limit: {}", limit);
         return ResponseEntity.ok(priceAnalysisService.getCheapestProducts(limit));
     }
 
     @GetMapping("/products/most-expensive")
-    public ResponseEntity<List<ProductPriceDTO>> getMostExpensiveProducts(@RequestParam(defaultValue = "10") int limit) {
+    public ResponseEntity<List<ProductPriceDTO>> getMostExpensiveProducts(
+            @RequestParam(defaultValue = "10") @Min(value = 1, message = "deve ser no mínimo 1") int limit) {
         log.info("GET /api/reports/products/most-expensive - limit: {}", limit);
         return ResponseEntity.ok(priceAnalysisService.getMostExpensiveProducts(limit));
     }

@@ -1,9 +1,11 @@
 package com.storepricetrack.store_price_track.modules.categories.controller;
 
 import com.storepricetrack.store_price_track.modules.categories.dto.CategoryDTO;
+import com.storepricetrack.store_price_track.modules.categories.dto.CategoryRequestDTO;
 import com.storepricetrack.store_price_track.modules.categories.exception.DuplicateCategoryException;
 import com.storepricetrack.store_price_track.modules.categories.service.ICategoriesService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,16 +46,16 @@ public class CategoriesController {
     }
 
     @PostMapping
-    public ResponseEntity<CategoryDTO> create(@RequestBody Map<String, String> body) {
-        log.info("POST /api/categories - name: {}", body.get("name"));
-        CategoryDTO created = categoriesService.create(body.get("name"));
+    public ResponseEntity<CategoryDTO> create(@Valid @RequestBody CategoryRequestDTO request) {
+        log.info("POST /api/categories - name: {}", request.name());
+        CategoryDTO created = categoriesService.create(request.name());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryDTO> update(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        log.info("PUT /api/categories/{} - name: {}", id, body.get("name"));
-        return ResponseEntity.ok(categoriesService.update(id, body.get("name")));
+    public ResponseEntity<CategoryDTO> update(@PathVariable Long id, @Valid @RequestBody CategoryRequestDTO request) {
+        log.info("PUT /api/categories/{} - name: {}", id, request.name());
+        return ResponseEntity.ok(categoriesService.update(id, request.name()));
     }
 
     @DeleteMapping("/{id}")

@@ -3,12 +3,14 @@ package com.storepricetrack.store_price_track.modules.receipts.controller;
 import com.storepricetrack.store_price_track.modules.receipts.dto.ReceiptResponseDTO;
 import com.storepricetrack.store_price_track.modules.receipts.service.IReceiptsService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +26,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/receipts")
 @RequiredArgsConstructor
+@Validated
 public class ReceiptsController {
 
     private static final Logger log = LoggerFactory.getLogger(ReceiptsController.class);
@@ -51,7 +54,8 @@ public class ReceiptsController {
     }
 
     @GetMapping("/recent")
-    public ResponseEntity<List<ReceiptResponseDTO>> getRecent(@RequestParam(defaultValue = "3") int months) {
+    public ResponseEntity<List<ReceiptResponseDTO>> getRecent(
+            @RequestParam(defaultValue = "3") @Min(value = 1, message = "deve ser no mínimo 1") int months) {
         log.info("GET /api/receipts/recent - months: {}", months);
         return ResponseEntity.ok(receiptsService.getRecent(months));
     }

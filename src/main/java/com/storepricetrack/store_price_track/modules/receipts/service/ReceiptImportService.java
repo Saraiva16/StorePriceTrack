@@ -45,6 +45,9 @@ public class ReceiptImportService implements IReceiptImportService {
 
     @Override
     public ReceiptResponseDTO importReceipt(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new ReceiptExtractionException("Arquivo de imagem vazio");
+        }
         byte[] bytes = readBytes(file);
         String mimeType = Optional.ofNullable(file.getContentType()).orElse("image/jpeg");
 

@@ -4,10 +4,12 @@ import com.storepricetrack.store_price_track.modules.receipt_items.dto.PriceStat
 import com.storepricetrack.store_price_track.modules.receipt_items.dto.ReceiptItemDTO;
 import com.storepricetrack.store_price_track.modules.receipt_items.dto.TopProductDTO;
 import com.storepricetrack.store_price_track.modules.receipt_items.service.IReceiptItemsService;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/receipt-items")
 @RequiredArgsConstructor
+@Validated
 public class ReceiptItemsController {
 
     private static final Logger log = LoggerFactory.getLogger(ReceiptItemsController.class);
@@ -38,7 +41,8 @@ public class ReceiptItemsController {
     }
 
     @GetMapping("/top-products")
-    public ResponseEntity<List<TopProductDTO>> getTopProducts(@RequestParam(defaultValue = "10") int limit) {
+    public ResponseEntity<List<TopProductDTO>> getTopProducts(
+            @RequestParam(defaultValue = "10") @Min(value = 1, message = "deve ser no mínimo 1") int limit) {
         log.info("GET /api/receipt-items/top-products - limit: {}", limit);
         return ResponseEntity.ok(receiptItemsService.getTopProducts(limit));
     }
