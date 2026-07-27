@@ -51,26 +51,33 @@
 
 ## 📋 Tabela de Referência Rápida: Endpoints Esperados
 
-### Fase 2 (Próxima)
+### Fase 2 (Concluída)
 
 | Método | Endpoint | Descrição | Status |
 |--------|----------|-----------|--------|
 | POST | `/api/receipts/import` | Importar novo recibo | ✅ DONE |
-| GET | `/api/receipts` | Listar recibos com filtros | ⏳ TODO |
-| GET | `/api/receipts/{id}` | Detalhe de um recibo | ⏳ TODO |
-| GET | `/api/receipts/market/{marketId}` | Recibos por mercado | ⏳ TODO |
-| GET | `/api/receipt-items` | Listar itens com filtros | ⏳ TODO |
-| GET | `/api/receipt-items/{productId}/history` | Histórico de preço | ⏳ TODO |
+| GET | `/api/receipts/{id}` | Detalhe de um recibo | ✅ DONE |
+| GET | `/api/receipts/market/{marketId}` | Recibos por mercado | ✅ DONE |
+| GET | `/api/receipts/period?start=&end=` | Recibos por período | ✅ DONE |
+| GET | `/api/receipts/recent?months=` | Histórico recente (N meses) | ✅ DONE |
+| GET | `/api/receipt-items/product/{productId}` | Itens por produto | ✅ DONE |
+| GET | `/api/receipt-items/product/{productId}/price-stats` | Min/média/máx de preço | ✅ DONE |
+| GET | `/api/receipt-items/top-products?limit=` | Top produtos mais comprados | ✅ DONE |
 
-### Fase 3 (Normalização)
+### Fase 3 (Em progresso — falta normalização automática)
 
 | Método | Endpoint | Descrição | Status |
 |--------|----------|-----------|--------|
-| GET | `/api/products` | Listar produtos | ⏳ TODO |
-| POST | `/api/products` | Criar produto | ⏳ TODO |
-| PUT | `/api/products/{id}` | Atualizar produto | ⏳ TODO |
-| GET | `/api/categories` | Listar categorias | ⏳ TODO |
-| POST | `/api/categories` | Criar categoria | ⏳ TODO |
+| GET | `/api/products?name=` | Listar/buscar produtos | ✅ DONE |
+| GET | `/api/products/{id}` | Detalhe de um produto | ✅ DONE |
+| POST | `/api/products` | Criar produto | ✅ DONE |
+| PUT | `/api/products/{id}` | Atualizar categoria do produto | ✅ DONE |
+| GET | `/api/categories` | Listar categorias | ✅ DONE |
+| GET | `/api/categories/{id}` | Detalhe de uma categoria | ✅ DONE |
+| POST | `/api/categories` | Criar categoria | ✅ DONE |
+| PUT | `/api/categories/{id}` | Atualizar categoria | ✅ DONE |
+| DELETE | `/api/categories/{id}` | Remover categoria | ✅ DONE |
+| — | Normalização automática de produtos | Detectar duplicados, mapear nome do recibo → produto | ⏳ TODO |
 
 ### Fase 4 (Análise)
 
