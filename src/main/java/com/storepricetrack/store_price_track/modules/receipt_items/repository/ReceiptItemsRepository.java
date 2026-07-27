@@ -19,6 +19,8 @@ public interface ReceiptItemsRepository extends JpaRepository<ReceiptItemsEntity
 
     List<ReceiptItemsEntity> findByProductId(Long productId);
 
+    List<ReceiptItemsEntity> findByProductIsNotNull();
+
     Optional<ReceiptItemsEntity> findFirstByOriginalNameOnReceiptIgnoreCaseAndProductIsNotNull(String originalNameOnReceipt);
 
     @Query("SELECT MIN(ri.unitPrice) FROM ReceiptItemsEntity ri WHERE ri.product.id = :productId")

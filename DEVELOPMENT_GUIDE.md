@@ -80,13 +80,16 @@
 | — | Normalização automática (import) | Match exato de alta confiança: mapeia nome bruto do recibo → produto já visto | ✅ DONE |
 | — | Detecção de produtos duplicados / sugestão de agrupamento | Ferramenta de qualidade de dados, escopo separado | ⏳ TODO |
 
-### Fase 4 (Análise)
+### Fase 4 (Concluída)
 
 | Método | Endpoint | Descrição | Status |
 |--------|----------|-----------|--------|
-| GET | `/api/reports/price-trends` | Tendência de preços | ⏳ TODO |
-| GET | `/api/reports/market-comparison` | Comparação entre mercados | ⏳ TODO |
-| GET | `/api/reports/best-shopping-days` | Melhores dias para comprar | ⏳ TODO |
+| GET | `/api/reports/price-trends?productId=` | Tendência de preço por mês | ✅ DONE |
+| GET | `/api/reports/market-comparison?productId=` | Comparação entre mercados | ✅ DONE |
+| GET | `/api/reports/products/cheapest?limit=` | Produtos mais baratos | ✅ DONE |
+| GET | `/api/reports/products/most-expensive?limit=` | Produtos mais caros | ✅ DONE |
+| GET | `/api/reports/best-shopping-days` | Melhor dia da semana (desvio % da média do produto) | ✅ DONE |
+| GET | `/api/reports/purchase-pattern` | Frequência de compra por dia da semana | ✅ DONE |
 
 ---
 
