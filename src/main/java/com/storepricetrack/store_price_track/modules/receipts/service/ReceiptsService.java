@@ -59,7 +59,8 @@ public class ReceiptsService implements IReceiptsService {
 
     private ReceiptResponseDTO toResponseDTO(ReceiptsEntity receipt) {
         List<ReceiptItemDTO> items = receiptItemsRepository.findByReceiptId(receipt.getId()).stream()
-                .map(i -> new ReceiptItemDTO(i.getOriginalNameOnReceipt(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice()))
+                .map(i -> new ReceiptItemDTO(i.getOriginalNameOnReceipt(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice(),
+                        i.getProduct() != null ? i.getProduct().getId() : null))
                 .toList();
         MarketsEntity market = receipt.getMarket();
         return new ReceiptResponseDTO(

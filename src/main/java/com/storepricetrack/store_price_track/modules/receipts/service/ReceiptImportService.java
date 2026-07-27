@@ -3,6 +3,7 @@ package com.storepricetrack.store_price_track.modules.receipts.service;
 import com.storepricetrack.store_price_track.modules.markets.dto.MarketDTO;
 import com.storepricetrack.store_price_track.modules.markets.repository.MarketsRepository;
 import com.storepricetrack.store_price_track.modules.markets.service.IMarketsService;
+import com.storepricetrack.store_price_track.modules.products_master.repository.ProductsMasterRepository;
 import com.storepricetrack.store_price_track.modules.receipt_items.dto.ReceiptItemDTO;
 import com.storepricetrack.store_price_track.modules.receipt_items.entity.ReceiptItemsEntity;
 import com.storepricetrack.store_price_track.modules.receipt_items.repository.ReceiptItemsRepository;
@@ -40,6 +41,7 @@ public class ReceiptImportService implements IReceiptImportService {
     private final ReceiptItemsRepository receiptItemsRepository;
     private final MarketsRepository marketsRepository;
     private final IMarketsService marketsService;
+    private final ProductsMasterRepository productsMasterRepository;
 
     @Override
     public ReceiptResponseDTO importReceipt(MultipartFile file) {
@@ -99,12 +101,28 @@ public class ReceiptImportService implements IReceiptImportService {
         entity.setQuantity(item.quantity());
         entity.setUnitPrice(item.unitPrice());
         entity.setTotalPrice(item.totalPrice() != null ? item.totalPrice() : item.quantity().multiply(item.unitPrice()));
+        findConfidentProductMatch(item.name())
+                .ifPresent(productId -> entity.setProduct(productsMasterRepository.getReferenceById(productId)));
         return entity;
+    }
+
+    private Optional<Long> findConfidentProductMatch(String originalNameOnReceipt) {
+        if (originalNameOnReceipt == null || originalNameOnReceipt.isBlank()) {
+            return Optional.empty();
+        }
+        return receiptItemsRepository
+                .findFirstByOriginalNameOnReceiptIgnoreCaseAndProductIsNotNull(originalNameOnReceipt)
+                .map(existing -> {
+                    Long productId = existing.getProduct().getId();
+                    log.debug("Confident match: '{}' -> product {}", originalNameOnReceipt, productId);
+                    return productId;
+                });
     }
 
     private ReceiptResponseDTO toResponseDTO(ReceiptsEntity receipt, MarketDTO market, List<ReceiptItemsEntity> items) {
         List<ReceiptItemDTO> itemDTOs = items.stream()
-                .map(i -> new ReceiptItemDTO(i.getOriginalNameOnReceipt(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice()))
+                .map(i -> new ReceiptItemDTO(i.getOriginalNameOnReceipt(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice(),
+                        i.getProduct() != null ? i.getProduct().getId() : null))
                 .toList();
         return new ReceiptResponseDTO(
                 market.name(), market.cnpj(), receipt.getPurchaseDate(), receipt.getTotalAmount(), receipt.getAccessKey(), itemDTOs);

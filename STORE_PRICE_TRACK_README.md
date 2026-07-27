@@ -335,7 +335,7 @@ spring.jackson.property-naming-strategy=SNAKE_CASE
   - Variação de preço (min/max/média)
   - Top produtos mais comprados
 
-### 🔄 Fase 3: Normalização de Produtos (EM PROGRESSO)
+### ✅ Fase 3: Normalização de Produtos (CONCLUÍDA)
 
 - [x] **ProductsMasterService**
   - Listar todos os produtos
@@ -347,10 +347,12 @@ spring.jackson.property-naming-strategy=SNAKE_CASE
   - CRUD de categorias
   - Manter lista padrão de categorias
 
-- [ ] **Normalização Automática**
-  - Detectar produtos duplicados (mesma coisa, nomes diferentes)
-  - Sugerir agrupamentos
-  - Mapear nomes do recibo para produtos_master
+- [x] **Normalização Automática (alta confiança)**
+  - Mapear nomes do recibo para produtos_master automaticamente durante o import
+  - [ ] Detectar produtos duplicados (mesma coisa, nomes diferentes) — descoberto que é uma ferramenta de qualidade de dados separada, não bloqueia o valor principal
+  - [ ] Sugerir agrupamentos manuais — mesma observação acima
+
+> Nota: o match automático usa apenas correspondência exata (case-insensitive) do texto bruto do recibo contra itens já vinculados a um produto — sem fuzzy matching, pra evitar falso positivo. Itens com nome bruto nunca visto antes continuam sem `product_id` até alguém vincular manualmente via `PUT /api/products/{id}` ou até o próprio nome se repetir numa compra futura.
 
 ### ⏳ Fase 4: APIs de Análise e Relatório
 
