@@ -354,21 +354,26 @@ spring.jackson.property-naming-strategy=SNAKE_CASE
 
 > Nota: o match automático usa apenas correspondência exata (case-insensitive) do texto bruto do recibo contra itens já vinculados a um produto — sem fuzzy matching, pra evitar falso positivo. Itens com nome bruto nunca visto antes continuam sem `product_id` até alguém vincular manualmente via `PUT /api/products/{id}` ou até o próprio nome se repetir numa compra futura.
 
-### ⏳ Fase 4: APIs de Análise e Relatório
+### ✅ Fase 4: APIs de Análise e Relatório (CONCLUÍDA)
 
-- [ ] **PriceAnalysisService**
-  - Tendência de preço (histórico)
+- [x] **PriceAnalysisService**
+  - Tendência de preço (histórico, agrupado por mês)
   - Comparação entre mercados
   - Produtos mais caros/baratos
 
-- [ ] **BestDayAnalysisService**
-  - Qual dia da semana tem melhor promoção?
-  - Padrão de compra por data
+- [x] **BestDayAnalysisService**
+  - Qual dia da semana tem melhor promoção? (desvio % do preço de cada item em relação à própria média histórica, agregado por dia da semana — evita comparar preço absoluto entre produtos diferentes)
+  - Padrão de compra por data (contagem de recibos por dia da semana)
 
-- [ ] **ReportController**
-  - GET /api/reports/price-trends
-  - GET /api/reports/market-comparison
+- [x] **ReportController**
+  - GET /api/reports/price-trends?productId=
+  - GET /api/reports/market-comparison?productId=
+  - GET /api/reports/products/cheapest?limit=
+  - GET /api/reports/products/most-expensive?limit=
   - GET /api/reports/best-shopping-days
+  - GET /api/reports/purchase-pattern
+
+> Nota: "melhor dia" usa o desvio percentual do preço de cada item em relação à média histórica do próprio produto (não a média bruta entre produtos diferentes), porque compras costumam ser uma cesta variada — comparar preços absolutos entre dias misturaria itens diferentes e não refletiria promoção de verdade.
 
 ### ⏳ Fase 5: Melhorias e Otimizações
 
