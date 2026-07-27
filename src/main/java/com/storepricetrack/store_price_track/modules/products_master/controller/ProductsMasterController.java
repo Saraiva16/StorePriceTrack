@@ -4,6 +4,8 @@ import com.storepricetrack.store_price_track.modules.products_master.dto.Product
 import com.storepricetrack.store_price_track.modules.products_master.dto.ProductMasterRequestDTO;
 import com.storepricetrack.store_price_track.modules.products_master.dto.UpdateProductCategoryRequestDTO;
 import com.storepricetrack.store_price_track.modules.products_master.service.IProductsMasterService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
+@Tag(name = "Products", description = "Catálogo de produtos (products_master): listar, buscar, criar e atualizar categoria")
 public class ProductsMasterController {
 
     private static final Logger log = LoggerFactory.getLogger(ProductsMasterController.class);
@@ -60,6 +63,8 @@ public class ProductsMasterController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @Operation(summary = "Atualiza a categoria de um produto",
+            description = "Envie categoryId: null para remover a categoria do produto.")
     @PutMapping("/{id}")
     public ResponseEntity<ProductMasterDTO> updateCategory(
             @PathVariable Long id, @RequestBody UpdateProductCategoryRequestDTO request) {

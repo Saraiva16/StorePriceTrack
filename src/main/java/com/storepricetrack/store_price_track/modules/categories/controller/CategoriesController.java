@@ -4,6 +4,7 @@ import com.storepricetrack.store_price_track.modules.categories.dto.CategoryDTO;
 import com.storepricetrack.store_price_track.modules.categories.dto.CategoryRequestDTO;
 import com.storepricetrack.store_price_track.modules.categories.exception.DuplicateCategoryException;
 import com.storepricetrack.store_price_track.modules.categories.service.ICategoriesService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
+@Tag(name = "Categories", description = "CRUD de categorias de produtos")
 public class CategoriesController {
 
     private static final Logger log = LoggerFactory.getLogger(CategoriesController.class);

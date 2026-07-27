@@ -2,6 +2,7 @@ package com.storepricetrack.store_price_track.modules.receipts.controller;
 
 import com.storepricetrack.store_price_track.modules.receipts.dto.ReceiptResponseDTO;
 import com.storepricetrack.store_price_track.modules.receipts.service.IReceiptsService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ import java.util.Map;
 @RequestMapping("/api/receipts")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Receipts - Consultas", description = "Consulta de recibos por id, mercado, período ou histórico recente")
 public class ReceiptsController {
 
     private static final Logger log = LoggerFactory.getLogger(ReceiptsController.class);
