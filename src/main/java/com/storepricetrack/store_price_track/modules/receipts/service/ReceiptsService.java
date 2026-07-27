@@ -10,6 +10,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,19 +29,15 @@ public class ReceiptsService implements IReceiptsService {
     private final ReceiptItemsRepository receiptItemsRepository;
 
     @Override
-    public List<ReceiptResponseDTO> findByMarket(Long marketId) {
+    public Page<ReceiptResponseDTO> findByMarket(Long marketId, Pageable pageable) {
         log.debug("Fetching receipts for market {}", marketId);
-        return receiptsRepository.findByMarketId(marketId).stream()
-                .map(this::toResponseDTO)
-                .toList();
+        return receiptsRepository.findByMarketId(marketId, pageable).map(this::toResponseDTO);
     }
 
     @Override
-    public List<ReceiptResponseDTO> findByPeriod(LocalDateTime start, LocalDateTime end) {
+    public Page<ReceiptResponseDTO> findByPeriod(LocalDateTime start, LocalDateTime end, Pageable pageable) {
         log.debug("Fetching receipts between {} and {}", start, end);
-        return receiptsRepository.findByPurchaseDateBetween(start, end).stream()
-                .map(this::toResponseDTO)
-                .toList();
+        return receiptsRepository.findByPurchaseDateBetween(start, end, pageable).map(this::toResponseDTO);
     }
 
     @Override
@@ -51,10 +49,10 @@ public class ReceiptsService implements IReceiptsService {
     }
 
     @Override
-    public List<ReceiptResponseDTO> getRecent(int months) {
+    public Page<ReceiptResponseDTO> getRecent(int months, Pageable pageable) {
         LocalDateTime end = LocalDateTime.now();
         LocalDateTime start = end.minusMonths(months);
-        return findByPeriod(start, end);
+        return findByPeriod(start, end, pageable);
     }
 
     private ReceiptResponseDTO toResponseDTO(ReceiptsEntity receipt) {

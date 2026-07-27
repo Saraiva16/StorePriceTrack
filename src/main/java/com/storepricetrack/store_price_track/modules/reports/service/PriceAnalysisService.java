@@ -10,6 +10,7 @@ import com.storepricetrack.store_price_track.modules.reports.dto.ProductPriceDTO
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,7 @@ public class PriceAnalysisService implements IPriceAnalysisService {
     private final ReceiptItemsRepository receiptItemsRepository;
 
     @Override
+    @Cacheable(value = "priceTrend", key = "#productId")
     public List<PriceTrendPointDTO> getPriceTrend(Long productId) {
         log.debug("Calculating price trend for product {}", productId);
         Map<YearMonth, List<BigDecimal>> byMonth = receiptItemsRepository.findByProductId(productId).stream()
@@ -45,6 +47,7 @@ public class PriceAnalysisService implements IPriceAnalysisService {
     }
 
     @Override
+    @Cacheable(value = "marketComparison", key = "#productId")
     public List<MarketPriceComparisonDTO> compareMarkets(Long productId) {
         log.debug("Comparing markets for product {}", productId);
         Map<Long, List<ReceiptItemsEntity>> byMarket = receiptItemsRepository.findByProductId(productId).stream()
@@ -62,6 +65,7 @@ public class PriceAnalysisService implements IPriceAnalysisService {
     }
 
     @Override
+    @Cacheable(value = "cheapestProducts", key = "#limit")
     public List<ProductPriceDTO> getCheapestProducts(int limit) {
         log.debug("Fetching {} cheapest products", limit);
         return aggregateByProduct().stream()
@@ -71,6 +75,7 @@ public class PriceAnalysisService implements IPriceAnalysisService {
     }
 
     @Override
+    @Cacheable(value = "mostExpensiveProducts", key = "#limit")
     public List<ProductPriceDTO> getMostExpensiveProducts(int limit) {
         log.debug("Fetching {} most expensive products", limit);
         return aggregateByProduct().stream()

@@ -375,13 +375,13 @@ spring.jackson.property-naming-strategy=SNAKE_CASE
 
 > Nota: "melhor dia" usa o desvio percentual do preço de cada item em relação à média histórica do próprio produto (não a média bruta entre produtos diferentes), porque compras costumam ser uma cesta variada — comparar preços absolutos entre dias misturaria itens diferentes e não refletiria promoção de verdade.
 
-### ⏳ Fase 5: Melhorias e Otimizações
+### ✅ Fase 5: Melhorias e Otimizações (CONCLUÍDA)
 
-- [ ] Paginação em queries
-- [ ] Cache de dados frequentes
-- [ ] Validação de dados mais robusta
-- [ ] Testes unitários e integração
-- [ ] Documentação Swagger/OpenAPI
+- [x] Validação de dados mais robusta (Bean Validation + `GlobalExceptionHandler`)
+- [x] Testes unitários e integração (31 testes: services com Mockito + 1 integração com Spring/MySQL real e rollback automático)
+- [x] Paginação em queries (`Pageable`/`PagedModel` nas listagens abertas, `max-page-size=100`)
+- [x] Documentação Swagger/OpenAPI (`springdoc-openapi`, UI em `/swagger-ui/index.html`)
+- [x] Cache de dados frequentes (Spring Cache em memória nos relatórios/agregações, invalidado a cada import de recibo)
 
 ---
 

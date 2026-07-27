@@ -1,12 +1,12 @@
 package com.storepricetrack.store_price_track.modules.products_master.service;
 
 import com.storepricetrack.store_price_track.modules.products_master.dto.ProductMasterDTO;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface IProductsMasterService {
 
-    List<ProductMasterDTO> findAll();
+    Page<ProductMasterDTO> findAll(Pageable pageable);
 
     ProductMasterDTO getById(Long id);
 
@@ -14,5 +14,5 @@ public interface IProductsMasterService {
 
     ProductMasterDTO updateCategory(Long productId, Long categoryId);
 
-    List<ProductMasterDTO> findByNamePattern(String pattern);
+    Page<ProductMasterDTO> findByNamePattern(String pattern, Pageable pageable);
 }

@@ -7,7 +7,10 @@ import com.storepricetrack.store_price_track.modules.receipt_items.repository.Re
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,14 +28,14 @@ public class ReceiptItemsService implements IReceiptItemsService {
     private final ReceiptItemsRepository receiptItemsRepository;
 
     @Override
-    public List<ReceiptItemDTO> findByProduct(Long productId) {
+    public Page<ReceiptItemDTO> findByProduct(Long productId, Pageable pageable) {
         log.debug("Fetching receipt items for product {}", productId);
-        return receiptItemsRepository.findByProductId(productId).stream()
-                .map(i -> new ReceiptItemDTO(i.getOriginalNameOnReceipt(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice(), productId))
-                .toList();
+        return receiptItemsRepository.findByProductId(productId, pageable)
+                .map(i -> new ReceiptItemDTO(i.getOriginalNameOnReceipt(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice(), productId));
     }
 
     @Override
+    @Cacheable(value = "priceStats", key = "#productId")
     public PriceStatsDTO getPriceStats(Long productId) {
         log.debug("Calculating price stats for product {}", productId);
         BigDecimal min = receiptItemsRepository.findMinUnitPriceByProductId(productId).orElse(null);
@@ -44,6 +47,7 @@ public class ReceiptItemsService implements IReceiptItemsService {
     }
 
     @Override
+    @Cacheable(value = "topProducts", key = "#limit")
     public List<TopProductDTO> getTopProducts(int limit) {
         log.debug("Fetching top {} products", limit);
         return receiptItemsRepository.findTopProducts(PageRequest.of(0, limit));

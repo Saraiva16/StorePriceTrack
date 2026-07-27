@@ -1,12 +1,18 @@
 package com.storepricetrack.store_price_track.modules.categories.controller;
 
 import com.storepricetrack.store_price_track.modules.categories.dto.CategoryDTO;
+import com.storepricetrack.store_price_track.modules.categories.dto.CategoryRequestDTO;
 import com.storepricetrack.store_price_track.modules.categories.exception.DuplicateCategoryException;
 import com.storepricetrack.store_price_track.modules.categories.service.ICategoriesService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,12 +25,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
+@Tag(name = "Categories", description = "CRUD de categorias de produtos")
 public class CategoriesController {
 
     private static final Logger log = LoggerFactory.getLogger(CategoriesController.class);
@@ -32,9 +38,9 @@ public class CategoriesController {
     private final ICategoriesService categoriesService;
 
     @GetMapping
-    public ResponseEntity<List<CategoryDTO>> getAll() {
-        log.info("GET /api/categories");
-        return ResponseEntity.ok(categoriesService.findAll());
+    public ResponseEntity<PagedModel<CategoryDTO>> getAll(@PageableDefault(size = 20) Pageable pageable) {
+        log.info("GET /api/categories - {}", pageable);
+        return ResponseEntity.ok(new PagedModel<>(categoriesService.findAll(pageable)));
     }
 
     @GetMapping("/{id}")
@@ -44,16 +50,16 @@ public class CategoriesController {
     }
 
     @PostMapping
-    public ResponseEntity<CategoryDTO> create(@RequestBody Map<String, String> body) {
-        log.info("POST /api/categories - name: {}", body.get("name"));
-        CategoryDTO created = categoriesService.create(body.get("name"));
+    public ResponseEntity<CategoryDTO> create(@Valid @RequestBody CategoryRequestDTO request) {
+        log.info("POST /api/categories - name: {}", request.name());
+        CategoryDTO created = categoriesService.create(request.name());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryDTO> update(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        log.info("PUT /api/categories/{} - name: {}", id, body.get("name"));
-        return ResponseEntity.ok(categoriesService.update(id, body.get("name")));
+    public ResponseEntity<CategoryDTO> update(@PathVariable Long id, @Valid @RequestBody CategoryRequestDTO request) {
+        log.info("PUT /api/categories/{} - name: {}", id, request.name());
+        return ResponseEntity.ok(categoriesService.update(id, request.name()));
     }
 
     @DeleteMapping("/{id}")
