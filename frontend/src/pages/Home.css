@@ -1,0 +1,100 @@
+.main-card {
+  background-color: var(--card-primary-bg);
+  border-radius: var(--border-radius-lg);
+  padding: 32px 24px;
+  color: var(--text-light);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 40px;
+  transition: transform 0.2s ease;
+}
+
+.main-card:active {
+  transform: scale(0.98);
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.icon-group {
+  display: flex;
+  gap: 8px;
+  font-size: 32px;
+}
+
+.text-content h2 {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.text-content p {
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+.arrow-container {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2;
+}
+
+/* Quick Summary Section */
+.summary-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-title {
+  font-size: 24px;
+  color: var(--text-dark);
+}
+
+.summary-cards {
+  display: flex;
+  gap: 16px;
+}
+
+.summary-card {
+  flex: 1;
+  background-color: var(--card-secondary-bg);
+  border-radius: var(--border-radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--icon-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.summary-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
