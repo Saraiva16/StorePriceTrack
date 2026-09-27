@@ -36,13 +36,6 @@
   transform: scale(0.9);
 }
 
-.fab-button {
-  transform: translateY(-20px);
-}
-
-.fab-button:active {
-  transform: translateY(-20px) scale(0.9);
-}
 
 .fab-inner {
   width: 64px;
