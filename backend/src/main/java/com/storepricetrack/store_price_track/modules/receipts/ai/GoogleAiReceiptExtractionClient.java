@@ -31,10 +31,16 @@ public class GoogleAiReceiptExtractionClient implements ReceiptExtractionClient 
               "purchase_date": string (ISO-8601, ex: 2026-07-20T14:30:00 ou 2026-07-20),
               "total_amount": number,
               "access_key": string (44 dígitos, chave de acesso da NF-e),
-              "items": [
-                { "name": string, "quantity": number, "unit_price": number, "total_price": number }
-              ]
-            }
+            "items": [
+              { 
+                "name": string (Traduza e expanda as abreviações do cupom para um formato claro e amigável. Ex: de 'LT INT BAT' para 'Leite Integral Batavo'), 
+                "category": string (Escolha apenas uma: Açougue, Laticínios e Ovos, Padaria, Hortifruti, Mercearia, Bebidas, Limpeza, Higiene, Congelados, Doces e Snacks, Outros),
+                "quantity": number, 
+                "unit_price": number, 
+                "total_price": number 
+              }
+            ]
+          }
             """;
 
     private final RestClient restClient;
@@ -69,15 +75,37 @@ public class GoogleAiReceiptExtractionClient implements ReceiptExtractionClient 
                 List.of(new GeminiContent(List.of(textPart, imagePart))),
                 new GeminiGenerationConfig("application/json"));
 
-        GeminiResponse response = restClient.post()
-                .uri("/v1beta/models/{model}:generateContent?key={apiKey}", model, apiKey)
+        GeminiResponse response;
+        try {
+            response = callApi(request, this.model);
+        } catch (org.springframework.web.client.RestClientResponseException e) {
+            if (e.getStatusCode().value() == 503) {
+                log.warn("Model {} is unavailable (503). Attempting fallback to gemini-pro-latest...", this.model);
+                try {
+                    response = callApi(request, "gemini-pro-latest");
+                } catch (Exception ex) {
+                    throw new ReceiptExtractionException("Ambos os modelos da IA estão indisponíveis no momento (503). O Google AI Studio está sobrecarregado.", ex);
+                }
+            } else {
+                log.error("Google AI returned HTTP {}: {}", e.getStatusCode().value(), e.getResponseBodyAsString());
+                throw new ReceiptExtractionException("Erro na IA do Google (" + e.getStatusCode().value() + "): " + e.getResponseBodyAsString(), e);
+            }
+        } catch (Exception e) {
+            log.error("Erro inesperado na IA: ", e);
+            throw new ReceiptExtractionException("Erro de comunicação com a IA: " + e.getMessage(), e);
+        }
+
+        String json = extractText(response);
+        return parse(json);
+    }
+
+    private GeminiResponse callApi(GeminiRequest request, String targetModel) {
+        return restClient.post()
+                .uri("/v1beta/models/{model}:generateContent?key={apiKey}", targetModel, apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request)
                 .retrieve()
                 .body(GeminiResponse.class);
-
-        String json = extractText(response);
-        return parse(json);
     }
 
     private String extractText(GeminiResponse response) {

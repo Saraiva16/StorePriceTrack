@@ -5,6 +5,7 @@ public record ProductMasterDTO(
         String normalizedName,
         String brand,
         String unitMeasure,
-        Long categoryId
+        Long categoryId,
+        String categoryName
 ) {
 }

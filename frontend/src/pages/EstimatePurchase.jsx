@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronLeft, Search, Plus, Trash2, Filter, X } from 'lucide-react';
+import { ChevronLeft, Search, Plus, Minus, Trash2, Filter, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { fetchNetworks, fetchProducts, recalculatePrices } from '../services/EstimateService';
+import ProductsTable from '../components/ProductsTable/ProductsTable';
+import BottomSheet from '../components/BottomSheet/BottomSheet';
 import './EstimatePurchase.css';
 
 export default function EstimatePurchase() {
@@ -17,11 +20,11 @@ export default function EstimatePurchase() {
   const [categories, setCategories] = useState(['Todos']);
   const [productsList, setProductsList] = useState([]);
   const [items, setItems] = useState([]);
+  const [estimatesFetchedFor, setEstimatesFetchedFor] = useState('');
 
 
   useEffect(() => {
-    fetch('/api/markets/networks')
-      .then(res => res.json())
+    fetchNetworks()
       .then(data => {
         if (data && data.length > 0) {
           setMarketsList(data);
@@ -35,30 +38,14 @@ export default function EstimatePurchase() {
         setMarket('Supermercado');
       });
 
-    fetch('/api/categories?size=100')
-      .then(res => res.json())
-      .then(data => {
-        const list = data.content || (data._embedded && data._embedded.categoryDTOList) || [];
-        setCategories(['Todos', ...list.map(c => c.name)]);
-      })
-      .catch(err => console.error('Erro ao buscar categorias:', err));
-
-    fetch('/api/products?size=100')
-      .then(res => res.json())
-      .then(data => {
-        const list = data.content || (data._embedded && data._embedded.productMasterDTOList) || [];
-        const formatted = list.map(p => ({
-          id: p.id,
-          name: p.normalized_name || p.normalizedName,
-          category: p.category_name || p.categoryName || 'Outros',
-          price: 0.00
-        }));
-        setProductsList(formatted);
-      })
+    fetchProducts()
+      .then(formatted => setProductsList(formatted))
       .catch(err => console.error('Erro ao buscar produtos:', err));
   }, []);
 
-  // Recalcula preços quando o mercado muda ou quando a lista de produtos carrega
+  const dynamicCategories = ['Todos', ...new Set(productsList.map(p => p.category))];
+
+  // Recalcula preços quando o mercado muda ou quando a lista de produtos carrega/muda
   useEffect(() => {
     if (!market || productsList.length === 0) return;
     
@@ -66,14 +53,8 @@ export default function EstimatePurchase() {
     items.forEach(item => namesToCalculate.add(item.name));
     productsList.forEach(p => namesToCalculate.add(p.name));
 
-    fetch('/api/estimate/recalculate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ marketName: market, products: Array.from(namesToCalculate) })
-    })
-      .then(res => res.json())
+    recalculatePrices(market, Array.from(namesToCalculate))
       .then(newPrices => {
-        // Atualiza a lista da cesta
         setItems(prevItems => prevItems.map(item => {
           if (newPrices[item.name] !== undefined) {
             return { ...item, unitPrice: newPrices[item.name] };
@@ -81,7 +62,6 @@ export default function EstimatePurchase() {
           return item;
         }));
         
-        // Atualiza os preços sugeridos no Bottom Sheet
         setProductsList(prevProds => prevProds.map(p => {
           if (newPrices[p.name] !== undefined) {
             return { ...p, price: newPrices[p.name] };
@@ -90,7 +70,7 @@ export default function EstimatePurchase() {
         }));
       })
       .catch(err => console.error("Erro ao recalcular preços", err));
-  }, [market, productsList.length]);
+  }, [market, productsList.length, items.length]);
 
   const totalGeral = items.reduce((acc, item) => acc + (item.qty * item.unitPrice), 0);
 
@@ -124,6 +104,17 @@ export default function EstimatePurchase() {
     }
   };
 
+  const handleRemoveFromSheet = (product) => {
+    const existing = items.find(i => i.name === product.name);
+    if (existing) {
+      if (existing.qty > 1) {
+        handleUpdateItem(existing.id, 'qty', existing.qty - 1);
+      } else {
+        handleRemoveItem(existing.id);
+      }
+    }
+  };
+
   const handleRemoveItem = (id) => {
     setItems(items.filter(item => item.id !== id));
   };
@@ -131,8 +122,7 @@ export default function EstimatePurchase() {
   const handleUpdateItem = (id, field, value) => {
     setItems(items.map(item => {
       if (item.id === id) {
-        const parsedValue = value === '' ? '' : Number(value);
-        return { ...item, [field]: parsedValue };
+        return { ...item, [field]: value };
       }
       return item;
     }));
@@ -196,119 +186,23 @@ export default function EstimatePurchase() {
         </div>
       </div>
 
-      <div className="products-table-container">
-        <h3 className="table-title">Lista de produtos</h3>
-        
-        <div className="table-responsive">
-          <table className="products-table">
-            <thead>
-              <tr>
-                <th>Produto</th>
-                <th>Qtd</th>
-                <th>Vlr Unit</th>
-                <th>Total</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map(item => (
-                <tr key={item.id}>
-                  <td>{item.name}</td>
-                  <td>
-                    <input 
-                      type="text" 
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={item.qty} 
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9]/g, '');
-                        handleUpdateItem(item.id, 'qty', val);
-                      }}
-                      onBlur={() => {
-                        if (item.qty === '' || Number(item.qty) <= 0) {
-                          handleUpdateItem(item.id, 'qty', 1);
-                        }
-                      }}
-                      className="cell-input qty-input"
-                    />
-                  </td>
-                  <td>
-                    <input 
-                      type="text" 
-                      value={`R$ ${Number(item.unitPrice).toFixed(2).replace('.', ',')}`}
-                      readOnly
-                      className="cell-input price-input"
-                      style={{ backgroundColor: '#f0f0f0', color: '#666', border: '1px solid #ddd', cursor: 'not-allowed' }}
-                    />
-                  </td>
-                  <td className="total-cell">R$ {(item.qty * item.unitPrice).toFixed(2).replace('.', ',')}</td>
-                  <td>
-                    <button className="delete-btn" onClick={() => handleRemoveItem(item.id)}>
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {items.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="empty-state">Nenhum produto adicionado</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <ProductsTable 
+        items={items} 
+        onUpdateItem={handleUpdateItem} 
+        onRemoveItem={handleRemoveItem} 
+      />
 
-      {/* Bottom Sheet Modal */}
-      {isBottomSheetOpen && createPortal(
-        <>
-          <div className="bottom-sheet-overlay" onClick={() => setIsBottomSheetOpen(false)}></div>
-          <div className="bottom-sheet animate-slide-up-fast">
-            <div className="bottom-sheet-header">
-              <h3>Buscar Produtos</h3>
-              <button className="close-btn" onClick={() => setIsBottomSheetOpen(false)}>
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="categories-scroll">
-              {categories.map(cat => (
-                <button 
-                  key={cat} 
-                  className={`category-chip ${selectedCategory === cat ? 'active' : ''}`}
-                  onClick={() => setSelectedCategory(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            <div className="sheet-products-list">
-              {productsList
-                .filter(p => selectedCategory === 'Todos' || p.category === selectedCategory)
-                .map(product => {
-                  const addedItem = items.find(i => i.name === product.name);
-                  return (
-                    <div key={product.id} className="sheet-product-item">
-                      <div className="sheet-product-info">
-                        <span className="sheet-product-name">
-                          {product.name}
-                          {addedItem && <span className="added-badge">{addedItem.qty}x na lista</span>}
-                        </span>
-                        <span className="sheet-product-price">R$ {product.price.toFixed(2).replace('.', ',')} (Média)</span>
-                      </div>
-                      <button className="add-sheet-btn" onClick={() => handleAddFromSheet(product)}>
-                        <Plus size={20} />
-                      </button>
-                    </div>
-                  );
-                })
-              }
-            </div>
-          </div>
-        </>,
-        document.getElementById('root')
-      )}
+      <BottomSheet 
+        isOpen={isBottomSheetOpen}
+        onClose={() => setIsBottomSheetOpen(false)}
+        dynamicCategories={dynamicCategories}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        productsList={productsList}
+        items={items}
+        onAddFromSheet={handleAddFromSheet}
+        onRemoveFromSheet={handleRemoveFromSheet}
+      />
     </div>
   );
 }

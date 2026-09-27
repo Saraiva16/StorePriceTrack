@@ -85,6 +85,7 @@ public class ProductsMasterService implements IProductsMasterService {
 
     private ProductMasterDTO toDTO(ProductsMasterEntity entity) {
         Long categoryId = entity.getCategory() != null ? entity.getCategory().getId() : null;
-        return new ProductMasterDTO(entity.getId(), entity.getNormalizedName(), entity.getBrand(), entity.getUnitMeasure(), categoryId);
+        String categoryName = entity.getCategory() != null ? entity.getCategory().getName() : null;
+        return new ProductMasterDTO(entity.getId(), entity.getNormalizedName(), entity.getBrand(), entity.getUnitMeasure(), categoryId, categoryName);
     }
 }

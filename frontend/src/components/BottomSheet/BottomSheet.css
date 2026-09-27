@@ -1,0 +1,177 @@
+.bottom-sheet-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.bottom-sheet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-color, #f4f6f8);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 24px;
+  z-index: 1001;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+}
+
+@keyframes slideUpFast {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.animate-slide-up-fast {
+  animation: slideUpFast 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.bottom-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.bottom-sheet-header h3 {
+  font-size: 20px;
+  color: var(--text-dark, #333);
+}
+
+.close-btn {
+  background: var(--card-secondary-bg, #f5f5f5);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-dark, #333);
+}
+
+.categories-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.categories-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.category-chip {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  color: var(--text-dark, #333);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.category-chip.active {
+  background: var(--card-primary-bg, #fff);
+  color: var(--accent-color, #4361ee);
+  border-color: var(--accent-color, #4361ee);
+}
+
+.sheet-products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 50vh;
+  padding-bottom: 20px;
+}
+
+.sheet-product-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 16px;
+  border-radius: var(--border-radius-md, 12px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.sheet-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  padding-right: 12px;
+}
+
+.sheet-product-name {
+  font-weight: 600;
+  color: var(--text-dark, #333);
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.added-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-primary-bg, #fff);
+  color: var(--text-dark, #333);
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  flex-shrink: 0;
+}
+
+.sheet-product-price {
+  font-size: 13px;
+  color: #666;
+}
+
+.add-sheet-btn {
+  background: var(--accent-color, #4361ee);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.add-sheet-btn:active {
+  transform: scale(0.9);
+}
+
+.sub-sheet-btn {
+  background: var(--card-secondary-bg, #f5f5f5);
+  color: var(--text-dark, #333);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.sub-sheet-btn:active {
+  transform: scale(0.9);
+}

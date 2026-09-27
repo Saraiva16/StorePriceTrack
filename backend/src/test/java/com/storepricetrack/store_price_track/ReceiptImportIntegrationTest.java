@@ -43,7 +43,7 @@ class ReceiptImportIntegrationTest {
                 "Mercado Integracao", "11.111.111/0001-11", "Rua Teste", "SP",
                 "2026-07-20T15:30:00", new BigDecimal("15.90"), "INTEGRATION-TEST-0001",
                 List.of(new ReceiptExtractionItem(
-                        "Item Teste", BigDecimal.ONE, new BigDecimal("15.90"), new BigDecimal("15.90"))));
+                        "Item Teste", "Outros", BigDecimal.ONE, new BigDecimal("15.90"), new BigDecimal("15.90"))));
         Mockito.when(extractionClient.extract(Mockito.any(), Mockito.any())).thenReturn(extraction);
 
         MockMultipartFile file = new MockMultipartFile("file", "nota.jpg", "image/jpeg", new byte[]{1, 2, 3});

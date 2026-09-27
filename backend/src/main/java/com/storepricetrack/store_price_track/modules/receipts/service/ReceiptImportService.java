@@ -7,6 +7,10 @@ import com.storepricetrack.store_price_track.modules.products_master.repository.
 import com.storepricetrack.store_price_track.modules.receipt_items.dto.ReceiptItemDTO;
 import com.storepricetrack.store_price_track.modules.receipt_items.entity.ReceiptItemsEntity;
 import com.storepricetrack.store_price_track.modules.receipt_items.repository.ReceiptItemsRepository;
+import com.storepricetrack.store_price_track.modules.categories.repository.CategoriesRepository;
+import com.storepricetrack.store_price_track.modules.categories.entity.CategoriesEntity;
+import com.storepricetrack.store_price_track.modules.receipts.entity.ReceiptImportQueueEntity;
+import com.storepricetrack.store_price_track.modules.receipts.repository.ReceiptImportQueueRepository;
 import com.storepricetrack.store_price_track.modules.receipts.ai.ReceiptExtractionClient;
 import com.storepricetrack.store_price_track.modules.receipts.ai.ReceiptExtractionException;
 import com.storepricetrack.store_price_track.modules.receipts.ai.ReceiptExtractionResult;
@@ -44,6 +48,8 @@ public class ReceiptImportService implements IReceiptImportService {
     private final MarketsRepository marketsRepository;
     private final IMarketsService marketsService;
     private final ProductsMasterRepository productsMasterRepository;
+    private final CategoriesRepository categoriesRepository;
+    private final ReceiptImportQueueRepository queueRepository;
 
     @Override
     @Caching(evict = {
@@ -63,7 +69,21 @@ public class ReceiptImportService implements IReceiptImportService {
         byte[] bytes = readBytes(file);
         String mimeType = Optional.ofNullable(file.getContentType()).orElse("image/jpeg");
 
-        ReceiptExtractionResult extraction = extractionClient.extract(bytes, mimeType);
+        ReceiptExtractionResult extraction;
+        try {
+            extraction = extractionClient.extract(bytes, mimeType);
+        } catch (ReceiptExtractionException e) {
+            if (e.getMessage() != null && e.getMessage().contains("503")) {
+                log.warn("AI 503 Error. Saving receipt to background queue...");
+                ReceiptImportQueueEntity queueItem = new ReceiptImportQueueEntity();
+                queueItem.setImageBytes(bytes);
+                queueItem.setMimeType(mimeType);
+                queueItem.setErrorMessage(e.getMessage());
+                queueItem.setStatus("PENDING");
+                queueRepository.save(queueItem);
+            }
+            throw e;
+        }
 
         if (extraction.accessKey() != null && receiptsRepository.findByAccessKey(extraction.accessKey()).isPresent()) {
             throw new DuplicateReceiptException("Recibo já importado (access_key: " + extraction.accessKey() + ")");
@@ -118,7 +138,7 @@ public class ReceiptImportService implements IReceiptImportService {
         entity.setTotalPrice(item.totalPrice() != null ? item.totalPrice() : item.quantity().multiply(item.unitPrice()));
         
         Long productId = findConfidentProductMatch(item.name())
-                .orElseGet(() -> createNewProductMaster(item.name()));
+                .orElseGet(() -> createNewProductMaster(item.name(), item.category()));
                 
         if (productId != null) {
             entity.setProduct(productsMasterRepository.getReferenceById(productId));
@@ -126,7 +146,7 @@ public class ReceiptImportService implements IReceiptImportService {
         return entity;
     }
 
-    private Long createNewProductMaster(String name) {
+    private Long createNewProductMaster(String name, String categoryName) {
         if (name == null || name.isBlank()) return null;
         String normalized = name.trim().toUpperCase();
 
@@ -137,7 +157,19 @@ public class ReceiptImportService implements IReceiptImportService {
                             new com.storepricetrack.store_price_track.modules.products_master.entity.ProductsMasterEntity();
                     newProduct.setNormalizedName(normalized);
                     newProduct.setUnitMeasure("un");
-                    log.info("Auto-creating new Product Master for: {}", normalized);
+                    
+                    if (categoryName != null && !categoryName.isBlank()) {
+                        String cleanCat = categoryName.trim();
+                        CategoriesEntity cat = categoriesRepository.findByName(cleanCat)
+                            .orElseGet(() -> {
+                                CategoriesEntity newCat = new CategoriesEntity();
+                                newCat.setName(cleanCat);
+                                return categoriesRepository.save(newCat);
+                            });
+                        newProduct.setCategory(cat);
+                    }
+                    
+                    log.info("Auto-creating new Product Master for: {} in category: {}", normalized, categoryName);
                     return productsMasterRepository.save(newProduct).getId();
                 });
     }

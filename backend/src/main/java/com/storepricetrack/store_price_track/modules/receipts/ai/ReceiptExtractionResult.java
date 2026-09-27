@@ -16,6 +16,7 @@ public record ReceiptExtractionResult(
 
     public record ReceiptExtractionItem(
             String name,
+            String category,
             BigDecimal quantity,
             BigDecimal unitPrice,
             BigDecimal totalPrice

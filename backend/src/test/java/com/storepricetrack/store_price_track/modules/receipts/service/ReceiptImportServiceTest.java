@@ -91,7 +91,7 @@ class ReceiptImportServiceTest {
     void importReceipt_persistsReceiptAndAutoLinksProduct_onConfidentMatch() {
         MultipartFile file = new MockMultipartFile("file", "nota.jpg", "image/jpeg", new byte[]{1, 2, 3});
         ReceiptExtractionItem extractedItem =
-                new ReceiptExtractionItem("Leite", BigDecimal.ONE, new BigDecimal("5.00"), new BigDecimal("5.00"));
+                new ReceiptExtractionItem("Leite", "Outros", BigDecimal.ONE, new BigDecimal("5.00"), new BigDecimal("5.00"));
         ReceiptExtractionResult extraction = new ReceiptExtractionResult(
                 "Mercado X", "00.000.000/0001-00", "Rua 1", "SP", "2026-07-01T10:00:00",
                 new BigDecimal("5.00"), "XYZ789", List.of(extractedItem));
@@ -129,7 +129,7 @@ class ReceiptImportServiceTest {
     void importReceipt_computesTotalPrice_whenAiOmitsIt() {
         MultipartFile file = new MockMultipartFile("file", "nota.jpg", "image/jpeg", new byte[]{1, 2, 3});
         ReceiptExtractionItem itemWithoutTotal =
-                new ReceiptExtractionItem("Arroz", new BigDecimal("2"), new BigDecimal("10.00"), null);
+                new ReceiptExtractionItem("Arroz", "Outros", new BigDecimal("2"), new BigDecimal("10.00"), null);
         ReceiptExtractionResult extraction = new ReceiptExtractionResult(
                 "Mercado X", "00.000.000/0001-00", null, null, "2026-07-01T10:00:00",
                 new BigDecimal("20.00"), "NOTOTAL01", List.of(itemWithoutTotal));

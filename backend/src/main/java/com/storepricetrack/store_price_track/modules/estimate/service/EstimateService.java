@@ -30,6 +30,12 @@ public class EstimateService {
             if (prices != null && !prices.isEmpty()) {
                 BigDecimal avg = calculateAverageWithoutOutliers(prices);
                 result.put(product, avg);
+            } else {
+                List<BigDecimal> allPrices = itemsRepository.findPricesByProduct(product);
+                if (allPrices != null && !allPrices.isEmpty()) {
+                    BigDecimal avg = calculateAverageWithoutOutliers(allPrices);
+                    result.put(product, avg);
+                }
             }
         }
 
