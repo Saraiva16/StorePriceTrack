@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-color: #f7f3ec;
+  --text-dark: #3a3b37;
+  --text-light: #ffffff;
+  
+  --card-primary-bg: #89b4b1;
+  --card-secondary-bg: #e1e3dd;
+  
+  --accent-color: #f59c8d;
+  --icon-color: #89b4b1;
+  
+  --border-radius-lg: 24px;
+  --border-radius-md: 16px;
+  --border-radius-pill: 50px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: #1e1e1e; /* Desktop background */
+  color: var(--text-dark);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+#root {
+  width: 100%;
+  max-width: 430px; /* Mobile width container */
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  background-color: var(--bg-color);
+  box-shadow: 0 0 40px rgba(0,0,0,0.2);
+}
+
+.page-container {
+  padding: 24px;
+  padding-top: 60px;
+  padding-bottom: 120px; /* space for bottom nav */
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out forwards;
+}
