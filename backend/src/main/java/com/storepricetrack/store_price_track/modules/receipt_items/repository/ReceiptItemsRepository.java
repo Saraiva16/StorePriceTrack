@@ -51,4 +51,8 @@ public interface ReceiptItemsRepository extends JpaRepository<ReceiptItemsEntity
     List<BigDecimal> findPricesByProductAndMarket(
             @Param("productName") String productName,
             @Param("marketName") String marketName);
+
+    @Query("SELECT ri.unitPrice FROM ReceiptItemsEntity ri " +
+           "WHERE ri.product.normalizedName = :productName")
+    List<BigDecimal> findPricesByProduct(@Param("productName") String productName);
 }

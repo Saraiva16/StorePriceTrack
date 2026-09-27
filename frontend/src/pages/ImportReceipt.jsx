@@ -47,7 +47,18 @@ export default function ImportReceipt() {
         navigate('/home');
       } else {
         const errorData = await response.json().catch(() => null);
-        alert('Erro ao enviar nota: ' + (errorData?.message || 'Verifique se o backend está rodando.'));
+        const errMessage = errorData?.error || errorData?.message || '';
+        
+        if (response.status === 409 || errMessage.toLowerCase().includes('duplicat') || errMessage.toLowerCase().includes('já importado')) {
+          alert('Atenção: Esta nota fiscal já foi fotografada e importada anteriormente!');
+          handleClear();
+        } else if (errMessage.includes('503') || errMessage.includes('indisponíveis')) {
+          alert('A Inteligência Artificial do Google está com fila cheia no momento.\n\nSua foto foi salva em nossa fila! Assim que o sistema liberar (tentaremos novamente nas próximas horas), sua nota será processada automaticamente.\n\nVocê já pode continuar usando o aplicativo sem estresse!');
+          handleClear();
+          navigate('/home');
+        } else {
+          alert('Erro ao enviar nota: ' + (errMessage || 'Verifique se o backend está rodando.'));
+        }
       }
     } catch (error) {
       console.error("Erro no upload:", error);

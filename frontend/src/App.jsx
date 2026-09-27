@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import Home from './pages/Home';
 import ImportReceipt from './pages/ImportReceipt';
 import EstimatePurchase from './pages/EstimatePurchase';
-import BottomNav from './components/BottomNav';
+import BottomNav from './components/BottomNav/BottomNav';
 
 function AppContent() {
   const location = useLocation();

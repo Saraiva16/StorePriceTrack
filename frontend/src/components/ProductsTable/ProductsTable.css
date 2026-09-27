@@ -1,0 +1,87 @@
+.products-table-container {
+  background: white;
+  border-radius: var(--border-radius-lg, 16px);
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.table-title {
+  margin-bottom: 16px;
+  color: var(--text-dark, #333);
+  font-size: 18px;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  margin: 0 -10px;
+  padding: 0 10px;
+}
+
+.products-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 300px;
+}
+
+.products-table th {
+  text-align: left;
+  padding-bottom: 12px;
+  color: #888;
+  font-weight: 500;
+  font-size: 13px;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+
+.products-table td {
+  padding: 12px 0;
+  font-size: 14px;
+  border-bottom: 1px solid #f5f5f5;
+  color: var(--text-dark, #333);
+}
+
+.cell-input {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 6px;
+  font-family: 'Outfit', sans-serif;
+  text-align: center;
+  outline: none;
+  background: white;
+}
+
+.cell-input:focus {
+  border-color: var(--accent-color, #4361ee);
+}
+
+.qty-input {
+  width: 45px;
+}
+
+.price-input {
+  width: 65px;
+}
+
+.total-cell {
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-state {
+  text-align: center;
+  color: #aaa;
+  padding: 24px 0;
+}
