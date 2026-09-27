@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductsMasterRepository extends JpaRepository<ProductsMasterEntity, Long> {
@@ -14,4 +15,6 @@ public interface ProductsMasterRepository extends JpaRepository<ProductsMasterEn
     Page<ProductsMasterEntity> findByNormalizedNameContainingIgnoreCase(String normalizedName, Pageable pageable);
 
     List<ProductsMasterEntity> findByCategoryId(Long categoryId);
+
+    Optional<ProductsMasterEntity> findFirstByNormalizedNameIgnoreCase(String normalizedName);
 }

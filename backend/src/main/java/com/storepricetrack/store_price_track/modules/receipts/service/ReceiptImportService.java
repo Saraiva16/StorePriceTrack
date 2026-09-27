@@ -116,9 +116,30 @@ public class ReceiptImportService implements IReceiptImportService {
         entity.setQuantity(item.quantity());
         entity.setUnitPrice(item.unitPrice());
         entity.setTotalPrice(item.totalPrice() != null ? item.totalPrice() : item.quantity().multiply(item.unitPrice()));
-        findConfidentProductMatch(item.name())
-                .ifPresent(productId -> entity.setProduct(productsMasterRepository.getReferenceById(productId)));
+        
+        Long productId = findConfidentProductMatch(item.name())
+                .orElseGet(() -> createNewProductMaster(item.name()));
+                
+        if (productId != null) {
+            entity.setProduct(productsMasterRepository.getReferenceById(productId));
+        }
         return entity;
+    }
+
+    private Long createNewProductMaster(String name) {
+        if (name == null || name.isBlank()) return null;
+        String normalized = name.trim().toUpperCase();
+
+        return productsMasterRepository.findFirstByNormalizedNameIgnoreCase(normalized)
+                .map(com.storepricetrack.store_price_track.modules.products_master.entity.ProductsMasterEntity::getId)
+                .orElseGet(() -> {
+                    com.storepricetrack.store_price_track.modules.products_master.entity.ProductsMasterEntity newProduct = 
+                            new com.storepricetrack.store_price_track.modules.products_master.entity.ProductsMasterEntity();
+                    newProduct.setNormalizedName(normalized);
+                    newProduct.setUnitMeasure("un");
+                    log.info("Auto-creating new Product Master for: {}", normalized);
+                    return productsMasterRepository.save(newProduct).getId();
+                });
     }
 
     private Optional<Long> findConfidentProductMatch(String originalNameOnReceipt) {
