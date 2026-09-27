@@ -44,4 +44,11 @@ public interface ReceiptItemsRepository extends JpaRepository<ReceiptItemsEntity
             ORDER BY SUM(ri.quantity) DESC
             """)
     List<TopProductDTO> findTopProducts(Pageable pageable);
+
+    @Query("SELECT ri.unitPrice FROM ReceiptItemsEntity ri " +
+           "WHERE ri.product.normalizedName = :productName " +
+           "AND ri.receipt.market.name = :marketName")
+    List<BigDecimal> findPricesByProductAndMarket(
+            @Param("productName") String productName,
+            @Param("marketName") String marketName);
 }

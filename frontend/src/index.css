@@ -24,28 +24,43 @@
 
 body {
   font-family: 'Outfit', sans-serif;
-  background-color: #1e1e1e; /* Desktop background */
+  background-color: #1e1e1e;
   color: var(--text-dark);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   display: flex;
   justify-content: center;
+  overflow: hidden;
 }
 
 #root {
   width: 100%;
-  max-width: 430px; /* Mobile width container */
-  min-height: 100vh;
+  max-width: 430px;
+  height: 100dvh;
   position: relative;
-  overflow-x: hidden;
+  overflow: hidden;
   background-color: var(--bg-color);
   box-shadow: 0 0 40px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.app-layout {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  display: flex;
+  flex-direction: column;
 }
 
 .page-container {
   padding: 24px;
   padding-top: 60px;
   padding-bottom: 120px; /* space for bottom nav */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Typography */

@@ -26,6 +26,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.storepricetrack.store_price_track.modules.receipt_items.repository.ReceiptItemsRepository;
+import com.storepricetrack.store_price_track.modules.receipt_items.entity.ReceiptItemsEntity;
+import com.storepricetrack.store_price_track.modules.products_master.repository.ProductsMasterRepository;
+import com.storepricetrack.store_price_track.modules.products_master.entity.ProductsMasterEntity;
+import java.util.List;
 
 import java.util.Map;
 
@@ -38,6 +43,36 @@ public class ProductsMasterController {
     private static final Logger log = LoggerFactory.getLogger(ProductsMasterController.class);
 
     private final IProductsMasterService productsMasterService;
+    private final ReceiptItemsRepository receiptItemsRepository;
+    private final ProductsMasterRepository productsMasterRepository;
+
+    @GetMapping("/migrate/old")
+    public ResponseEntity<String> migrateOldReceipts() {
+        log.info("Starting migration of old receipts...");
+        List<ReceiptItemsEntity> orphans = receiptItemsRepository.findAll().stream()
+                .filter(item -> item.getProduct() == null)
+                .toList();
+
+        int created = 0;
+        for (ReceiptItemsEntity item : orphans) {
+            String name = item.getOriginalNameOnReceipt();
+            if (name == null || name.isBlank()) continue;
+            String normalized = name.trim().toUpperCase();
+
+            ProductsMasterEntity product = productsMasterRepository.findFirstByNormalizedNameIgnoreCase(normalized)
+                    .orElseGet(() -> {
+                        ProductsMasterEntity newProduct = new ProductsMasterEntity();
+                        newProduct.setNormalizedName(normalized);
+                        newProduct.setUnitMeasure("un");
+                        return productsMasterRepository.save(newProduct);
+                    });
+
+            item.setProduct(product);
+            receiptItemsRepository.save(item);
+            created++;
+        }
+        return ResponseEntity.ok("Migração concluída! " + created + " itens órfãos foram pareados/criados no Catálogo Mestre.");
+    }
 
     @GetMapping
     public ResponseEntity<PagedModel<ProductMasterDTO>> getAll(

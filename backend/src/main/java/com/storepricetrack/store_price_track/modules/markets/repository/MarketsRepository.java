@@ -2,6 +2,7 @@ package com.storepricetrack.store_price_track.modules.markets.repository;
 
 import com.storepricetrack.store_price_track.modules.markets.entity.MarketsEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,4 +14,7 @@ public interface MarketsRepository extends JpaRepository<MarketsEntity, Long> {
     Optional<MarketsEntity> findByCnpj(String cnpj);
 
     List<MarketsEntity> findByNameContainingIgnoreCase(String name);
+
+    @Query("SELECT DISTINCT m.name FROM MarketsEntity m ORDER BY m.name ASC")
+    List<String> findDistinctMarketNames();
 }

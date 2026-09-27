@@ -5,6 +5,7 @@
   width: 100%;
   padding: 24px;
   pointer-events: none;
+  z-index: 50;
 }
 
 .bottom-nav {

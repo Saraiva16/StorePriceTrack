@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -50,5 +52,11 @@ public class MarketsService implements IMarketsService {
                 entity.getAddress(),
                 entity.getCityUf()
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getDistinctMarketNetworks() {
+        return repository.findDistinctMarketNames();
     }
 }

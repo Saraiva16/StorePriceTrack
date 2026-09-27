@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowRight, Receipt, PiggyBank } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './Home.css';
 
 export default function Home() {
   const [shoppingList, setShoppingList] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Lógica de cache: limpa a lista se o dia virou
@@ -23,7 +25,7 @@ export default function Home() {
   return (
     <div className="page-container animate-slide-up">
       {/* Main Action Card */}
-      <div className="main-card">
+      <div className="main-card" onClick={() => navigate('/estimate')} style={{ cursor: 'pointer' }}>
         <div className="card-content">
           <div className="icon-group">
             <span className="emoji-icon">🛒</span>
