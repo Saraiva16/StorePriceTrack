@@ -36,9 +36,7 @@ export default function EventPlanning() {
   };
 
   const handleFinish = () => {
-    // In the future: compute estimation and save
-    console.log("Form Data:", formData);
-    navigate('/home'); // Redirect back for now, later to estimate results
+    navigate('/event/dashboard', { state: { eventData: formData } });
   };
 
   const updateGuests = (type, increment) => {

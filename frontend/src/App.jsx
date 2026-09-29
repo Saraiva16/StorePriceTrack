@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import ImportReceipt from './pages/ImportReceipt';
 import EstimatePurchase from './pages/EstimatePurchase';
 import EventPlanning from './pages/EventPlanning';
+import EventDashboard from './pages/EventDashboard';
 import Login from './pages/Login';
 import BottomNav from './components/BottomNav/BottomNav';
 
@@ -13,7 +14,7 @@ function AppContent() {
   const location = useLocation();
   const { user } = useAuth();
   // Don't show bottom nav on login page and event wizard, only when authenticated and not on full pages
-  const showBottomNav = user && location.pathname !== '/login' && location.pathname !== '/event';
+  const showBottomNav = user && location.pathname !== '/login' && !location.pathname.startsWith('/event');
 
   return (
     <div className="app-layout">
@@ -41,6 +42,11 @@ function AppContent() {
         <Route path="/event" element={
           <ProtectedRoute>
             <EventPlanning />
+          </ProtectedRoute>
+        } />
+        <Route path="/event/dashboard" element={
+          <ProtectedRoute>
+            <EventDashboard />
           </ProtectedRoute>
         } />
       </Routes>
