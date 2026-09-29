@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, HelpCircle, Edit2, Check, Flame, Utensils, Calendar } from 'lucide-react';
+import { ArrowLeft, HelpCircle, Edit2, Check, Flame, Utensils, Calendar, ChevronDown, ChevronUp, Beer, Users, Plus, Minus, Trash2, DownloadCloud } from 'lucide-react';
+import PostEventWizard from '../components/PostEventWizard';
 import './EventDashboard.css';
 
 export default function EventDashboard() {
@@ -13,6 +14,27 @@ export default function EventDashboard() {
   const [editValue, setEditValue] = useState('');
   const [showTooltip, setShowTooltip] = useState(null);
 
+  // Task 5 States
+  const [eventState, setEventState] = useState('pending'); // pending, running, feedback
+  const [timerSeconds, setTimerSeconds] = useState(eventData ? (eventData.duration || 4) * 3600 : 0);
+
+  // Task 4 States
+  const [isDrinksExpanded, setIsDrinksExpanded] = useState(false);
+  const [isStaffExpanded, setIsStaffExpanded] = useState(false);
+
+  const [selectedDrinks, setSelectedDrinks] = useState({
+    beer: true,
+    soda: true,
+    water: true,
+    juice: false
+  });
+
+  const [staffList, setStaffList] = useState([
+    { id: 1, role: 'Churrasqueiro', quantity: 1 },
+    { id: 2, role: 'Garçom', quantity: 1 },
+    { id: 3, role: 'Limpeza', quantity: 1 }
+  ]);
+
   useEffect(() => {
     if (!eventData) {
       navigate('/home');
@@ -20,6 +42,32 @@ export default function EventDashboard() {
     }
     calculateEstimates(eventData);
   }, [eventData, navigate]);
+
+  useEffect(() => {
+    let interval;
+    if (eventState === 'running') {
+      interval = setInterval(() => {
+        setTimerSeconds(prev => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [eventState]);
+
+  const formatTime = (totalSeconds) => {
+    if (isNaN(totalSeconds) || totalSeconds < 0) return "00:00:00";
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -99,11 +147,55 @@ export default function EventDashboard() {
     setShowTooltip(showTooltip === id ? null : id);
   };
 
+  const toggleDrink = (key) => {
+    setSelectedDrinks(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const updateStaff = (id, increment) => {
+    setStaffList(prev => prev.map(s => {
+      if (s.id === id) {
+        const newQtd = s.quantity + increment;
+        return { ...s, quantity: newQtd < 0 ? 0 : newQtd };
+      }
+      return s;
+    }));
+  };
+
+  const calculateDrinks = () => {
+    if (!eventData) return [];
+    const { guests } = eventData;
+    const adults = guests.men + guests.women;
+    const kids = guests.kids;
+    const totalPeople = adults + kids;
+    
+    const drinks = [];
+    if (selectedDrinks.beer) {
+      drinks.push({ id: 'beer', title: 'Cerveja', value: Math.ceil(adults * 1.5), unit: 'L', rule: '1.5L por adulto' });
+    }
+    if (selectedDrinks.soda) {
+      drinks.push({ id: 'soda', title: 'Refrigerante', value: Math.ceil((adults * 0.5) + (kids * 1)), unit: 'L', rule: '500ml p/ adulto + 1L p/ criança' });
+    }
+    if (selectedDrinks.water) {
+      drinks.push({ id: 'water', title: 'Água', value: Math.ceil(totalPeople * 0.5), unit: 'L', rule: '500ml por pessoa' });
+    }
+    if (selectedDrinks.juice) {
+      drinks.push({ id: 'juice', title: 'Suco', value: Math.ceil(kids * 0.8), unit: 'L', rule: '800ml por criança' });
+    }
+    return drinks;
+  };
+
+  const handleStartEvent = () => {
+    setEventState('running');
+    setIsDrinksExpanded(false);
+    setIsStaffExpanded(false);
+  };
+
   if (!eventData) return null;
 
   return (
-    <div className="page-container dash-container animate-slide-up">
-      <header className="dash-header">
+    <>
+      <div className="page-container dash-container animate-slide-up">
+        <header className="dash-header">
         <button className="icon-btn" onClick={() => navigate('/event')}>
           <ArrowLeft size={24} />
         </button>
@@ -173,20 +265,139 @@ export default function EventDashboard() {
               </div>
             </div>
           ))}
+
+          {/* Drinks Accordion */}
+          <section className="accordion-section">
+            <div className="accordion-header" onClick={() => setIsDrinksExpanded(!isDrinksExpanded)}>
+              <div className="accordion-title">
+                <div className="estimate-icon">
+                  <Beer size={20} />
+                </div>
+                <h3>Bebidas</h3>
+              </div>
+              {isDrinksExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </div>
+            
+            {isDrinksExpanded && (
+              <div className="accordion-content animate-slide-up">
+                <div className="drinks-selector">
+                  <label className="checkbox-label">
+                    <input type="checkbox" checked={selectedDrinks.beer} onChange={() => toggleDrink('beer')} /> Cerveja
+                  </label>
+                  <label className="checkbox-label">
+                    <input type="checkbox" checked={selectedDrinks.soda} onChange={() => toggleDrink('soda')} /> Refri
+                  </label>
+                  <label className="checkbox-label">
+                    <input type="checkbox" checked={selectedDrinks.water} onChange={() => toggleDrink('water')} /> Água
+                  </label>
+                  <label className="checkbox-label">
+                    <input type="checkbox" checked={selectedDrinks.juice} onChange={() => toggleDrink('juice')} /> Suco
+                  </label>
+                </div>
+
+                <div className="drinks-estimates">
+                  {calculateDrinks().map(drink => (
+                    <div key={drink.id} className="drink-card">
+                      <div className="drink-info">
+                        <h4>{drink.title}</h4>
+                        <span className="drink-rule">{drink.rule}</span>
+                      </div>
+                      <div className="drink-value">
+                        <span className="val">{drink.value}</span>
+                        <span className="unt">{drink.unit}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {calculateDrinks().length === 0 && <p className="empty-text">Nenhuma bebida selecionada.</p>}
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Staff Accordion - Only for Social Events */}
+          {eventData.eventType === 'Social' && (
+            <section className="accordion-section">
+              <div className="accordion-header" onClick={() => setIsStaffExpanded(!isStaffExpanded)}>
+                <div className="accordion-title">
+                  <div className="estimate-icon">
+                    <Users size={20} />
+                  </div>
+                  <h3>Equipe & Funcionários</h3>
+                </div>
+                {isStaffExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </div>
+              
+              {isStaffExpanded && (
+                <div className="accordion-content animate-slide-up">
+                  <div className="staff-list">
+                    {staffList.map(staff => (
+                      <div key={staff.id} className="staff-item">
+                        <span className="staff-role">{staff.role}</span>
+                        <div className="counter-widget">
+                          <button onClick={() => updateStaff(staff.id, -1)} className="counter-btn" disabled={staff.quantity === 0}>
+                            <Minus size={14} />
+                          </button>
+                          <span className="counter-val">{staff.quantity}</span>
+                          <button onClick={() => updateStaff(staff.id, 1)} className="counter-btn">
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button className="add-staff-btn">
+                    <Plus size={16} /> Adicionar Função
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* PDF Download Card */}
+          <div className="pdf-download-card">
+            <div className="pdf-icon-bg">
+              <DownloadCloud size={28} color="#ffffff" />
+            </div>
+            <div className="pdf-content">
+              <h4>Lista de Compras Pronta</h4>
+              <p>Baixe o PDF com as quantidades exatas para o mercado.</p>
+            </div>
+            <button className="pdf-btn" onClick={() => alert('PDF Baixado com sucesso!')}>
+              Baixar
+            </button>
+          </div>
+
         </div>
       </section>
 
-      {/* Task 4 Placeholders */}
-      <section className="coming-soon-section">
-        <h3>+ Adicionar Bebidas</h3>
-        <p>A gestão de bebidas e funcionários será feita aqui em breve (Task 4).</p>
-      </section>
-
-      <div className="start-event-footer">
-        <button className="btn-primary start-btn">
-          Começar Evento 🎉
-        </button>
+        {eventState === 'pending' && (
+          <div className="start-event-footer">
+            <button className="btn-primary start-btn" onClick={handleStartEvent}>
+              Começar Evento 🎉
+            </button>
+          </div>
+        )}
       </div>
-    </div>
+
+      {eventState === 'running' && (
+        <div className="active-event-bar animate-slide-up">
+          <div className="timer-display">
+            <div className="pulsing-dot"></div>
+            <span className="time-text">{formatTime(timerSeconds)}</span>
+          </div>
+          <button className="finish-btn" onClick={() => setEventState('feedback')}>
+            Finalizar
+          </button>
+        </div>
+      )}
+
+      {eventState === 'feedback' && (
+        <PostEventWizard 
+          onClose={() => navigate('/home')} 
+          eventData={eventData}
+          estimates={estimates}
+        />
+      )}
+    </>
   );
 }
