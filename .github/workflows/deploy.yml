@@ -23,11 +23,11 @@ jobs:
         run: tar -czf app.tar.gz --exclude=node_modules --exclude=target --exclude=.git --exclude=dist *
 
       - name: Enviar pacote via SCP Nativamente
-        run: scp -v -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa app.tar.gz ${{ secrets.AWS_USERNAME }}@${{ secrets.AWS_HOST }}:/home/ubuntu/
+        run: scp -v -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa app.tar.gz ubuntu@54.233.118.144:/home/ubuntu/
 
       - name: Descompactar e Fazer Deploy
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.AWS_USERNAME }}@${{ secrets.AWS_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@54.233.118.144 << 'EOF'
             mkdir -p storePriceTrack
             tar -xzf app.tar.gz -C storePriceTrack
             cd storePriceTrack
