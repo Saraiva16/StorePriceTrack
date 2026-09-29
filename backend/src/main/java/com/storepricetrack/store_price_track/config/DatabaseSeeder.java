@@ -3,9 +3,11 @@ package com.storepricetrack.store_price_track.config;
 import com.storepricetrack.store_price_track.modules.auth.entity.User;
 import com.storepricetrack.store_price_track.modules.auth.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!prod")
 public class DatabaseSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;

@@ -58,6 +58,9 @@ class ReceiptImportServiceTest {
     @Mock
     private ProductsMasterRepository productsMasterRepository;
 
+    @Mock
+    private com.storepricetrack.store_price_track.modules.categories.repository.CategoriesRepository categoriesRepository;
+
     @Captor
     private org.mockito.ArgumentCaptor<List<ReceiptItemsEntity>> itemsCaptor;
 
@@ -142,6 +145,11 @@ class ReceiptImportServiceTest {
         when(receiptsRepository.save(any(ReceiptsEntity.class))).thenAnswer(inv -> inv.getArgument(0));
         when(receiptItemsRepository.findFirstByOriginalNameOnReceiptIgnoreCaseAndProductIsNotNull(any()))
                 .thenReturn(Optional.empty());
+        when(productsMasterRepository.save(any())).thenAnswer(inv -> {
+            ProductsMasterEntity p = inv.getArgument(0);
+            p.setId(99L);
+            return p;
+        });
 
         ReceiptResponseDTO response = service.importReceipt(file);
 
