@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: store_price_track_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: store_price_track
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+
+  backend:
+    build: ./backend
+    container_name: store_price_track_backend
+    restart: always
+    ports:
+      - "8080:8080" # Necessário para o Nginx/Cloudflare alcançarem o backend via API
+    depends_on:
+      - db
+    environment:
+      - DB_URL=jdbc:mysql://db:3306/store_price_track
+      - DB_USER=root
+      - DB_PASSWORD=${DB_PASSWORD}
+      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY}
+      - GOOGLE_AI_MODEL=${GOOGLE_AI_MODEL}
+      # SPRING_PROFILES_ACTIVE=prod (se tiver profile de produção)
+
+  frontend:
+    build: ./frontend
+    container_name: store_price_track_frontend
+    restart: always
+    ports:
+      - "80:80" # Porta padrão HTTP que o Cloudflare vai buscar
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
