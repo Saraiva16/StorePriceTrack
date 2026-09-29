@@ -41,6 +41,23 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Event Planning Card */}
+      <div className="main-card event-theme" onClick={() => navigate('/event')} style={{ cursor: 'pointer' }}>
+        <div className="card-content">
+          <div className="icon-group">
+            <span className="emoji-icon">🎉</span>
+            <span className="emoji-icon">📅</span>
+          </div>
+          <div className="text-content">
+            <h2>Planejamento<br/>de Evento</h2>
+            <p>Organize festas e calcule os custos.</p>
+          </div>
+        </div>
+        <div className="arrow-container">
+          <ArrowRight size={32} color="white" />
+        </div>
+      </div>
+
       {/* Quick Summary */}
       <div className="summary-section">
         <h3 className="section-title">Quick Summary</h3>

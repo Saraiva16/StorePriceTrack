@@ -6,8 +6,12 @@
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-md);
-  margin-bottom: 40px;
+  margin-bottom: 24px; /* Reduced from 40px to fit both cards better */
   transition: transform 0.2s ease;
+}
+
+.main-card.event-theme {
+  background-color: #c4b5fd; /* Pastel purple */
 }
 
 .main-card:active {
