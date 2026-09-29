@@ -19,9 +19,20 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Value("${auth.cookie.secure:false}")
     private boolean cookieSecure;
+
+    @PostMapping("/register")
+    public ResponseEntity<AuthResponse> register(@RequestBody com.storepricetrack.store_price_track.modules.auth.dto.RegisterRequest request) {
+        try {
+            authService.register(request, passwordEncoder);
+            return ResponseEntity.ok(AuthResponse.builder().message("User registered successfully").build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(AuthResponse.builder().message(e.getMessage()).build());
+        }
+    }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
