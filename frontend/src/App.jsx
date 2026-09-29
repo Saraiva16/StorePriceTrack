@@ -7,7 +7,9 @@ import ImportReceipt from './pages/ImportReceipt';
 import EstimatePurchase from './pages/EstimatePurchase';
 import EventPlanning from './pages/EventPlanning';
 import EventDashboard from './pages/EventDashboard';
+import UsersManagement from './pages/UsersManagement';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import BottomNav from './components/BottomNav/BottomNav';
 
 function AppContent() {
@@ -20,6 +22,7 @@ function AppContent() {
     <div className="app-layout">
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         
         <Route path="/" element={<Navigate to="/home" replace />} />
         
@@ -47,6 +50,11 @@ function AppContent() {
         <Route path="/event/dashboard" element={
           <ProtectedRoute>
             <EventDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/users" element={
+          <ProtectedRoute>
+            <UsersManagement />
           </ProtectedRoute>
         } />
       </Routes>

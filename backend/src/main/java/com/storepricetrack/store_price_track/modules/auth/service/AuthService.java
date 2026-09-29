@@ -38,4 +38,15 @@ public class AuthService {
                 .username(user.getUsername())
                 .build();
     }
+
+    public void register(com.storepricetrack.store_price_track.modules.auth.dto.RegisterRequest request, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+        if (repository.findByUsername(request.getUsername()).isPresent()) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+        User newUser = User.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .build();
+        repository.save(newUser);
+    }
 }
