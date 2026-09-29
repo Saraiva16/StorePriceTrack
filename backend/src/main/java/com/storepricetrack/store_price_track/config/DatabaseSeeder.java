@@ -16,13 +16,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (userRepository.count() == 0) {
-            User admin = User.builder()
-                    .username("admin")
-                    .password(passwordEncoder.encode("admin"))
-                    .build();
-            userRepository.save(admin);
-            System.out.println("Default admin user created: username='admin', password='admin'");
-        }
+        // Todo o seeding de usuários foi movido para o Flyway (V1__Insert_Users.sql)
+        // Nenhuma credencial padrão ou hardcoded fica no código fonte.
     }
 }
