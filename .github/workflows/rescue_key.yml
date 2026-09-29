@@ -9,8 +9,11 @@ jobs:
   rescue:
     runs-on: ubuntu-latest
     steps:
-      - name: Recuperar Chave Oculta
-        run: |
-          echo "Copie o texto gigante abaixo e me mande no chat para eu decodificar:"
-          echo "${{ secrets.AWS_SSH_KEY }}" | base64 -w 0
-          echo ""
+      - name: Criar Arquivo
+        run: echo "${{ secrets.AWS_SSH_KEY }}" > awsCloud.pem
+        
+      - name: Disponibilizar para Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: awsCloud-resgatada
+          path: awsCloud.pem
