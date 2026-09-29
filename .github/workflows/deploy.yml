@@ -1,0 +1,34 @@
+name: Deploy to AWS Lightsail
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: Transferindo arquivos para AWS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USERNAME }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          source: "."
+          target: "/home/ubuntu/storePriceTrack"
+          rm: false # Importante: não apaga arquivos existentes (como o nosso .env)
+
+      - name: Executando Docker Compose na AWS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USERNAME }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/storePriceTrack
+            sudo docker compose --env-file backend/.env up -d --build

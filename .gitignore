@@ -1,0 +1,20 @@
+# Dependências do Node (Frontend)
+node_modules/
+dist/
+build/
+
+# Dependências do Java (Backend)
+target/
+*.jar
+*.class
+
+# Variáveis de ambiente
+.env
+
+# Chaves de segurança e AWS
+*.pem
+ssh/
+
+# Arquivos compactados (Deploy manual)
+*.tar.gz
+*.zip
