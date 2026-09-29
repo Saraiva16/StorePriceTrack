@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/Auth/AuthContext';
-import { ShoppingBag, Lock, User, ArrowRight } from 'lucide-react';
+import { Search, Lock, User, ArrowRight } from 'lucide-react';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -34,9 +34,9 @@ const Login = () => {
     <div className="page-container" style={styles.container}>
       <div style={styles.header} className="animate-slide-up">
         <div style={styles.iconWrapper}>
-          <ShoppingBag size={40} color="var(--text-light)" />
+          <Search size={40} color="var(--text-light)" />
         </div>
-        <h1 style={styles.title}>StorePrice Track</h1>
+        <h1 style={styles.title}>Lupa Smart</h1>
         <p style={styles.subtitle}>Acesse sua conta para continuar</p>
       </div>
 
