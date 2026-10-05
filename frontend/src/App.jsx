@@ -5,6 +5,7 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 import Home from './pages/Home';
 import ImportReceipt from './pages/ImportReceipt';
 import EstimatePurchase from './pages/EstimatePurchase';
+import ShoppingCart from './pages/ShoppingCart';
 import EventPlanning from './pages/EventPlanning';
 import EventDashboard from './pages/EventDashboard';
 import UsersManagement from './pages/UsersManagement';
@@ -15,8 +16,8 @@ import BottomNav from './components/BottomNav/BottomNav';
 function AppContent() {
   const location = useLocation();
   const { user } = useAuth();
-  // Don't show bottom nav on login page and event wizard, only when authenticated and not on full pages
-  const showBottomNav = user && location.pathname !== '/login' && !location.pathname.startsWith('/event');
+  // Show bottom nav ONLY on the home page
+  const showBottomNav = user && location.pathname === '/home';
 
   return (
     <div className="app-layout">
@@ -40,6 +41,11 @@ function AppContent() {
         <Route path="/estimate" element={
           <ProtectedRoute>
             <EstimatePurchase />
+          </ProtectedRoute>
+        } />
+        <Route path="/shopping-cart" element={
+          <ProtectedRoute>
+            <ShoppingCart />
           </ProtectedRoute>
         } />
         <Route path="/event" element={

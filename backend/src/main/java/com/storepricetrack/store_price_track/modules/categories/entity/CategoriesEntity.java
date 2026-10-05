@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Table(name = "categories")
 @Getter
 @Setter
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "hibernate_lazy_initializer", "handler"})
 public class CategoriesEntity {
 
     @Id

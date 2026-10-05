@@ -7,6 +7,7 @@ import java.util.List;
 import com.storepricetrack.store_price_track.modules.receipt_items.dto.ReceiptItemDTO;
 
 public record ReceiptResponseDTO(
+        Long id,
         String market_name,
         String cnpj,
         LocalDateTime purchase_date,
