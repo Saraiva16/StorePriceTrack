@@ -9,7 +9,7 @@ export default function BottomNav() {
   return (
     <div className="bottom-nav-container">
       <div className="bottom-nav">
-        <button className="nav-item" onClick={() => navigate('/home')}>
+        <button className="nav-item" onClick={() => navigate('/estimate')}>
           <ShoppingCart size={28} color="var(--icon-color)" />
         </button>
         
