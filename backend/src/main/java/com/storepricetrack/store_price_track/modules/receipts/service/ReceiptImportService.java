@@ -193,6 +193,6 @@ public class ReceiptImportService implements IReceiptImportService {
                         i.getProduct() != null ? i.getProduct().getId() : null))
                 .toList();
         return new ReceiptResponseDTO(
-                market.name(), market.cnpj(), receipt.getPurchaseDate(), receipt.getTotalAmount(), receipt.getAccessKey(), itemDTOs);
+                receipt.getId(), market.name(), market.cnpj(), receipt.getPurchaseDate(), receipt.getTotalAmount(), receipt.getAccessKey(), itemDTOs);
     }
 }

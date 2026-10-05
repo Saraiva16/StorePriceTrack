@@ -12,6 +12,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
+import com.storepricetrack.store_price_track.modules.shopping_list.dto.BestPurchaseDateResultDTO;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,9 +22,9 @@ public class BestPurchaseDateCalculator {
 
     private final ReceiptItemsRepository receiptItemsRepository;
 
-    public LocalDateTime calculateBestDate(ShoppingListEntity shoppingList) {
+    public BestPurchaseDateResultDTO calculateBestDate(ShoppingListEntity shoppingList) {
         if (shoppingList.getItems() == null || shoppingList.getItems().isEmpty()) {
-            return LocalDateTime.now().plusDays(1); // default fallback
+            return new BestPurchaseDateResultDTO(LocalDateTime.now().plusDays(1), BigDecimal.ZERO); // default fallback
         }
 
         List<Long> productIds = shoppingList.getItems().stream()
@@ -33,7 +34,7 @@ public class BestPurchaseDateCalculator {
         List<ReceiptItemsEntity> historicalItems = receiptItemsRepository.findByProductIdInWithReceipt(productIds);
 
         if (historicalItems.isEmpty()) {
-            return LocalDateTime.now().plusDays(1); // no data
+            return new BestPurchaseDateResultDTO(LocalDateTime.now().plusDays(1), BigDecimal.ZERO); // no data
         }
 
         // Map product id -> list of prices per day of week
@@ -63,14 +64,18 @@ public class BestPurchaseDateCalculator {
             totalCartValuePerDay.put(day, cartValueForDay);
         }
 
-        // Find the day with minimum cart value
+        // Find the day with minimum cart value and maximum cart value
         DayOfWeek bestDay = null;
         BigDecimal minCartValue = BigDecimal.valueOf(Double.MAX_VALUE);
+        BigDecimal maxCartValue = BigDecimal.ZERO;
 
         for (Map.Entry<DayOfWeek, BigDecimal> entry : totalCartValuePerDay.entrySet()) {
             if (entry.getValue().compareTo(minCartValue) < 0 && entry.getValue().compareTo(BigDecimal.ZERO) > 0) {
                 minCartValue = entry.getValue();
                 bestDay = entry.getKey();
+            }
+            if (entry.getValue().compareTo(maxCartValue) > 0) {
+                maxCartValue = entry.getValue();
             }
         }
 
@@ -78,9 +83,16 @@ public class BestPurchaseDateCalculator {
             bestDay = DayOfWeek.SATURDAY; // fallback
         }
 
+        BigDecimal savingsPercentage = BigDecimal.ZERO;
+        if (maxCartValue.compareTo(BigDecimal.ZERO) > 0 && minCartValue.compareTo(maxCartValue) < 0) {
+            savingsPercentage = maxCartValue.subtract(minCartValue)
+                    .divide(maxCartValue, 4, java.math.RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+        }
+
         // Find the NEXT occurrence of this best day
         LocalDate nextBestDayDate = LocalDate.now().with(TemporalAdjusters.next(bestDay));
-        return nextBestDayDate.atTime(10, 0); // Suggest 10 AM
+        return new BestPurchaseDateResultDTO(nextBestDayDate.atTime(10, 0), savingsPercentage);
     }
 
     private BigDecimal getAveragePriceForDay(Map<DayOfWeek, List<BigDecimal>> productPrices, DayOfWeek day) {

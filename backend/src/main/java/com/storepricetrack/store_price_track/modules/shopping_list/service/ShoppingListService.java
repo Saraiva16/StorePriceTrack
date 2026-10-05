@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.storepricetrack.store_price_track.modules.shopping_list.dto.BestPurchaseDateResultDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -69,8 +70,9 @@ public class ShoppingListService {
         cart.setStatus(ShoppingListStatus.CLOSED);
         cart.setClosedAt(LocalDateTime.now());
         
-        LocalDateTime bestDate = bestPurchaseDateCalculator.calculateBestDate(cart);
-        cart.setSuggestedBestDate(bestDate);
+        var bestDateResult = bestPurchaseDateCalculator.calculateBestDate(cart);
+        cart.setSuggestedBestDate(bestDateResult.getBestDate());
+        cart.setSuggestedSavingsPercentage(bestDateResult.getSavingsPercentage());
 
         return shoppingListRepository.save(cart);
     }

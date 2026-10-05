@@ -62,6 +62,6 @@ public class ReceiptsService implements IReceiptsService {
                 .toList();
         MarketsEntity market = receipt.getMarket();
         return new ReceiptResponseDTO(
-                market.getName(), market.getCnpj(), receipt.getPurchaseDate(), receipt.getTotalAmount(), receipt.getAccessKey(), items);
+                receipt.getId(), market.getName(), market.getCnpj(), receipt.getPurchaseDate(), receipt.getTotalAmount(), receipt.getAccessKey(), items);
     }
 }

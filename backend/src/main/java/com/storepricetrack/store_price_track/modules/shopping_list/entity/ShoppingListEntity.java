@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,9 @@ public class ShoppingListEntity {
 
     @Column(name = "suggested_best_date")
     private LocalDateTime suggestedBestDate;
+
+    @Column(name = "suggested_savings_percentage")
+    private BigDecimal suggestedSavingsPercentage;
 
     @Builder.Default
     @OneToMany(mappedBy = "shoppingList", cascade = CascadeType.ALL, orphanRemoval = true)

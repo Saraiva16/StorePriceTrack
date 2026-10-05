@@ -21,6 +21,7 @@ export default function EstimatePurchase() {
   const [comparisonReport, setComparisonReport] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [cartId, setCartId] = useState(null);
+  const [savingsPercentage, setSavingsPercentage] = useState(null);
   
   const [categories, setCategories] = useState(['Todos']);
   const [productsList, setProductsList] = useState([]);
@@ -187,9 +188,16 @@ export default function EstimatePurchase() {
       const closedCartData = await closeCart();
       if (closedCartData) {
         setCartId(closedCartData.id);
-        if (closedCartData.suggestedBestDate) {
-          const dateObj = new Date(closedCartData.suggestedBestDate);
+        // Accommodate SNAKE_CASE naming strategy from backend
+        const bestDateRaw = closedCartData.suggestedBestDate || closedCartData.suggested_best_date;
+        if (bestDateRaw) {
+          const dateObj = new Date(bestDateRaw);
           setSuggestedDate(dateObj.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }));
+        }
+
+        const savingsRaw = closedCartData.suggestedSavingsPercentage || closedCartData.suggested_savings_percentage;
+        if (savingsRaw && Number(savingsRaw) > 0) {
+          setSavingsPercentage(Number(savingsRaw).toFixed(0));
         }
       }
       setCartClosed(true);
@@ -224,6 +232,17 @@ export default function EstimatePurchase() {
     } catch (e) {
       console.error(e);
       alert("Erro no processamento da nota ou comparação: " + e.message);
+    }
+  };
+
+  const handleClearTable = () => {
+    if (window.confirm("Tem certeza que deseja limpar a tabela inteira?")) {
+      setItems([]);
+      setCartClosed(false);
+      setCartId(null);
+      setComparisonReport(null);
+      setSuggestedDate('');
+      setSavingsPercentage(null);
     }
   };
 
@@ -292,6 +311,26 @@ export default function EstimatePurchase() {
         <div className="summary-bubble">
           No <strong>{formattedDate}</strong> você gastará <strong>R$ {totalGeral.toFixed(2).replace('.', ',')}</strong> no <strong>{market}</strong>
         </div>
+
+        {/* CENA 1 - BEST DATE CARD */}
+        {cartClosed && suggestedDate && (
+          <div className="best-date-card slide-down" style={{ marginTop: '1rem', marginBottom: '0' }}>
+              <div className="best-date-icon-wrapper" style={{ padding: '0.6rem' }}>
+                  <Search size={20} color="#fff" />
+              </div>
+              <div className="best-date-info">
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '4px' }}>Melhor data sugerida</h3>
+                  <p style={{ fontSize: '0.9rem' }}>
+                    A melhor data para compra é <strong>{suggestedDate}</strong>.
+                    {savingsPercentage && savingsPercentage > 0 && (
+                      <span style={{ display: 'block', marginTop: '4px', color: '#1e272e', fontWeight: 'bold' }}>
+                        Você pode economizar até {savingsPercentage}%
+                      </span>
+                    )}
+                  </p>
+              </div>
+          </div>
+        )}
       </div>
 
       <ProductsTable 
@@ -300,21 +339,19 @@ export default function EstimatePurchase() {
         onRemoveItem={handleRemoveItem} 
       />
 
-      {/* CENA 1 - BEST DATE CARD */}
-      {cartClosed && suggestedDate && (
-        <div className="best-date-card slide-down" style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
-            <div className="best-date-icon-wrapper">
-                <Search size={24} color="#fff" />
-            </div>
-            <div className="best-date-info">
-                <h3>Melhor data sugerida</h3>
-                <p>Baseado no histórico, a melhor data para compra é na <strong>{suggestedDate}</strong>.</p>
-            </div>
-        </div>
-      )}
-
       {/* CENA 1 - ACTION BUTTONS */}
-      <div className="cart-actions-wrapper" style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem', paddingBottom: '2rem' }}>
+      <div className="cart-actions-wrapper" style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '1rem', paddingBottom: '2rem' }}>
+        {items.length > 0 && (
+           <button 
+              className="btn-clear-cart"
+              onClick={handleClearTable}
+              style={{ padding: '1rem', borderRadius: '50px', background: '#f1f2f6', color: '#57606f', border: '1px solid #dfe4ea', fontWeight: 'bold', display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer', transition: 'all 0.3s' }}
+              title="Limpar tabela"
+           >
+              <Trash2 size={20} />
+           </button>
+        )}
+
         {!cartClosed ? (
           <button 
               className={`btn-close-cart ${items.length === 0 ? 'disabled' : ''}`}
