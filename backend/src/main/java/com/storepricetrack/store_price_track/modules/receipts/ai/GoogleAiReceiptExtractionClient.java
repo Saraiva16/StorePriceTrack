@@ -80,9 +80,9 @@ public class GoogleAiReceiptExtractionClient implements ReceiptExtractionClient 
             response = callApi(request, this.model);
         } catch (org.springframework.web.client.RestClientResponseException e) {
             if (e.getStatusCode().value() == 503) {
-                log.warn("Model {} is unavailable (503). Attempting fallback to gemini-pro-latest...", this.model);
+                log.warn("Model {} is unavailable (503). Attempting fallback to gemini-3.5-flash-lite...", this.model);
                 try {
-                    response = callApi(request, "gemini-pro-latest");
+                    response = callApi(request, "gemini-3.5-flash-lite");
                 } catch (Exception ex) {
                     throw new ReceiptExtractionException("Ambos os modelos da IA estão indisponíveis no momento (503). O Google AI Studio está sobrecarregado.", ex);
                 }
