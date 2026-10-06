@@ -7,10 +7,12 @@ import { addItemToCart, closeCart, uploadReceipt, getComparisonReport } from '..
 import ProductsTable from '../components/ProductsTable/ProductsTable';
 import BottomSheet from '../components/BottomSheet/BottomSheet';
 import ReceiptUploadSheet from '../components/BottomSheet/ReceiptUploadSheet';
+import { useAuth } from '../components/Auth/AuthContext';
 import './EstimatePurchase.css';
 
 export default function EstimatePurchase() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const todayISO = new Date().toISOString().split('T')[0];
   const [market, setMarket] = useState('');
   const [marketsList, setMarketsList] = useState([]);
@@ -153,9 +155,11 @@ export default function EstimatePurchase() {
     }));
   };
 
+  const storageKey = `estimate_cart_items_${user?.username || 'guest'}`;
+
   // Persist items in localStorage so it stays over days
   useEffect(() => {
-    const saved = localStorage.getItem('estimate_cart_items');
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -163,16 +167,25 @@ export default function EstimatePurchase() {
           // Filter out any null or invalid items
           const validItems = parsed.filter(item => item && item.id && item.name);
           setItems(validItems);
+        } else {
+          setItems([]);
         }
       } catch (e) {
         console.error("Error parsing cart items", e);
+        setItems([]);
       }
+    } else {
+      setItems([]);
     }
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
-    localStorage.setItem('estimate_cart_items', JSON.stringify(items));
-  }, [items]);
+    if (items.length > 0) {
+      localStorage.setItem(storageKey, JSON.stringify(items));
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }, [items, storageKey]);
 
   const handleCloseCart = async () => {
     setProcessingCart(true);

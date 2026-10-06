@@ -12,6 +12,7 @@ services:
       - db_data:/var/lib/mysql
 
   backend:
+    image: storepricetrack-backend:latest
     build: ./backend
     container_name: store_price_track_backend
     restart: always
@@ -25,9 +26,11 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY}
       - GOOGLE_AI_MODEL=${GOOGLE_AI_MODEL}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       # SPRING_PROFILES_ACTIVE=prod (se tiver profile de produção)
 
   frontend:
+    image: storepricetrack-frontend:latest
     build: ./frontend
     container_name: store_price_track_frontend
     restart: always
