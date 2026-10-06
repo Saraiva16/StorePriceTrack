@@ -13,6 +13,16 @@ jobs:
       - name: Checkout do Código
         uses: actions/checkout@v4
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: cd backend && mvn clean package -Dmaven.test.skip=true
+
       - name: Configurar Chave SSH
         run: |
           mkdir -p ~/.ssh
@@ -20,7 +30,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
 
       - name: Compactar Arquivos localmente
-        run: tar -czf app.tar.gz --exclude=node_modules --exclude=target --exclude=.git --exclude=dist *
+        run: tar -czf app.tar.gz --exclude=node_modules --exclude=.git --exclude=dist *
 
       - name: Enviar pacote via SCP Nativamente
         run: scp -v -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa app.tar.gz ubuntu@54.233.118.144:/home/ubuntu/
