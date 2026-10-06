@@ -4,7 +4,7 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 # Faz o build empacotando em um .jar e pula os testes para ser mais rápido
-RUN mvn clean package -DskipTests
+RUN mvn clean package -Dmaven.test.skip=true
 
 # Estágio 2: Execução (Imagem final otimizada)
 FROM eclipse-temurin:21-jre-alpine
