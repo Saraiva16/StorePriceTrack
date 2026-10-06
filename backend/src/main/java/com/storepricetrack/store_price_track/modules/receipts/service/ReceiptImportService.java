@@ -133,9 +133,13 @@ public class ReceiptImportService implements IReceiptImportService {
         ReceiptItemsEntity entity = new ReceiptItemsEntity();
         entity.setReceipt(receipt);
         entity.setOriginalNameOnReceipt(item.name());
-        entity.setQuantity(item.quantity());
-        entity.setUnitPrice(item.unitPrice());
-        entity.setTotalPrice(item.totalPrice() != null ? item.totalPrice() : item.quantity().multiply(item.unitPrice()));
+        
+        java.math.BigDecimal qty = item.quantity() != null ? item.quantity() : java.math.BigDecimal.ONE;
+        java.math.BigDecimal price = item.unitPrice() != null ? item.unitPrice() : java.math.BigDecimal.ZERO;
+        
+        entity.setQuantity(qty);
+        entity.setUnitPrice(price);
+        entity.setTotalPrice(item.totalPrice() != null ? item.totalPrice() : qty.multiply(price));
         
         Long productId = findConfidentProductMatch(item.name())
                 .orElseGet(() -> createNewProductMaster(item.name(), item.category()));
