@@ -60,7 +60,8 @@ public class ReceiptImportService implements IReceiptImportService {
             @CacheEvict(value = "cheapestProducts", allEntries = true),
             @CacheEvict(value = "mostExpensiveProducts", allEntries = true),
             @CacheEvict(value = "bestShoppingDays", allEntries = true),
-            @CacheEvict(value = "purchasePattern", allEntries = true)
+            @CacheEvict(value = "purchasePattern", allEntries = true),
+            @CacheEvict(value = "products", allEntries = true)
     })
     public ReceiptResponseDTO importReceipt(MultipartFile file) {
         if (file.isEmpty()) {

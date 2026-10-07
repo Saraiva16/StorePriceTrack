@@ -23,8 +23,8 @@ public class ReceiptImportQueueProcessor {
     private final ReceiptImportQueueRepository queueRepository;
     private final IReceiptImportService receiptImportService;
 
-    // Roda a cada 2 horas
-    @Scheduled(fixedDelay = 2 * 60 * 60 * 1000)
+    // Roda a cada 5 minutos
+    @Scheduled(fixedDelay = 5 * 60 * 1000)
     public void processQueue() {
         List<ReceiptImportQueueEntity> pendingItems = queueRepository.findByStatusOrderByCreatedAtAsc("PENDING");
         

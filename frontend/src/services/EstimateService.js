@@ -4,10 +4,31 @@ export const fetchNetworks = async () => {
 };
 
 export const fetchProducts = async () => {
-  const res = await fetch('/api/products?size=100');
-  const data = await res.json();
-  const list = data.content || (data._embedded && data._embedded.productMasterDTOList) || [];
-  return list.map(p => ({
+  let allProducts = [];
+  let page = 0;
+  let hasMore = true;
+  const size = 100;
+
+  while (hasMore) {
+    try {
+      const res = await fetch(`/api/products?size=${size}&page=${page}`);
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      const list = data.content || (data._embedded && data._embedded.productMasterDTOList) || [];
+      allProducts = [...allProducts, ...list];
+      
+      if (list.length < size) {
+        hasMore = false;
+      } else {
+        page++;
+      }
+    } catch (error) {
+      console.error("Error fetching products on page", page, error);
+      hasMore = false;
+    }
+  }
+
+  return allProducts.map(p => ({
     id: p.id,
     name: p.normalized_name || p.normalizedName,
     category: p.category_name || p.categoryName || 'Outros',
