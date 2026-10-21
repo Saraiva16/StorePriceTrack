@@ -58,6 +58,23 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Travel Planning Card */}
+      <div className="main-card travel-theme" onClick={() => navigate('/trips')} style={{ cursor: 'pointer' }}>
+        <div className="card-content">
+          <div className="icon-group">
+            <span className="emoji-icon">✈️</span>
+            <span className="emoji-icon">🌴</span>
+          </div>
+          <div className="text-content">
+            <h2>Planejando<br/>nova viagem</h2>
+            <p>Lista de mercado e divisão de gastos com amigos.</p>
+          </div>
+        </div>
+        <div className="arrow-container">
+          <ArrowRight size={32} color="white" />
+        </div>
+      </div>
+
       {/* Quick Summary */}
       <div className="summary-section">
         <h3 className="section-title">Quick Summary</h3>

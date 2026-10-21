@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../components/Auth/AuthContext';
 import { Search, Lock, User, ArrowRight } from 'lucide-react';
 
@@ -10,6 +10,11 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from?.pathname 
+    ? `${location.state.from.pathname}${location.state.from.search || ''}` 
+    : (location.state?.from || '/home');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +24,7 @@ const Login = () => {
     try {
       const success = await login(username, password);
       if (success) {
-        navigate('/home', { replace: true });
+        navigate(from, { replace: true });
       } else {
         setError('Usuário ou senha inválidos.');
       }
@@ -79,6 +84,18 @@ const Login = () => {
           {isLoading ? 'Entrando...' : 'Entrar'}
           {!isLoading && <ArrowRight size={20} />}
         </button>
+
+        <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <p style={{ color: '#777', fontSize: '14px' }}>
+            Não tem uma conta?{' '}
+            <span 
+              onClick={() => navigate('/register', { state: { from: location.state?.from } })} 
+              style={{ color: 'var(--accent-color)', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              Cadastre-se aqui
+            </span>
+          </p>
+        </div>
       </form>
     </div>
   );

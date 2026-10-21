@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, Search, Plus, Minus, Trash2, Filter, X, ShoppingCart, CheckCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchNetworks, fetchProducts, recalculatePrices } from '../services/EstimateService';
 import { addItemToCart, closeCart, uploadReceipt, getComparisonReport } from '../services/ShoppingListService';
 import ProductsTable from '../components/ProductsTable/ProductsTable';
@@ -11,6 +11,9 @@ import './EstimatePurchase.css';
 
 export default function EstimatePurchase() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const tripId = location.state?.tripId;
+  const tripDestination = location.state?.tripDestination;
   const todayISO = new Date().toISOString().split('T')[0];
   const [market, setMarket] = useState('');
   const [marketsList, setMarketsList] = useState([]);
@@ -260,12 +263,30 @@ export default function EstimatePurchase() {
   return (
     <div className="page-container animate-slide-up estimate-page">
       <div className="header-bar">
-        <button className="icon-btn" onClick={() => navigate('/home')}>
+        <button className="icon-btn" onClick={() => tripId ? navigate(`/trips/${tripId}`) : navigate('/home')}>
           <ChevronLeft size={28} />
         </button>
         <h2>Estimativa</h2>
         <div style={{ width: 28 }}></div>
       </div>
+
+      {tripDestination && (
+        <div style={{
+          backgroundColor: '#e6f7f4',
+          border: '1px solid #2a9d8f',
+          borderRadius: '14px',
+          padding: '10px 14px',
+          marginBottom: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '13px',
+          color: '#264653'
+        }}>
+          <span style={{ fontSize: '16px' }}>✈️</span>
+          <span>Lista de mercado para: <strong>{tripDestination}</strong></span>
+        </div>
+      )}
 
       <div className="estimate-controls">
         <div className="control-group">

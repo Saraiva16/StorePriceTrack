@@ -14,6 +14,10 @@
   background-color: #c4b5fd; /* Pastel purple */
 }
 
+.main-card.travel-theme {
+  background: linear-gradient(135deg, #e07a5f 0%, #f4a261 100%);
+}
+
 .main-card:active {
   transform: scale(0.98);
 }
