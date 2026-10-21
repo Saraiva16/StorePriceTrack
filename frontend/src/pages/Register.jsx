@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../components/Auth/AuthContext';
 import { UserPlus, Lock, User, ArrowRight } from 'lucide-react';
 
 const Register = () => {
@@ -9,7 +10,9 @@ const Register = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,10 +36,24 @@ const Register = () => {
       });
 
       if (res.ok) {
-        setSuccess('Usuário cadastrado com sucesso! Redirecionando...');
-        setTimeout(() => {
-          navigate('/login', { replace: true });
-        }, 2000);
+        setSuccess('Cadastro realizado com sucesso! Redirecionando...');
+        
+        // Autentica automaticamente o usuário recém-criado
+        try {
+          const loggedIn = await login(username, password);
+          if (loggedIn) {
+            const destination = location.state?.from?.pathname 
+              ? `${location.state.from.pathname}${location.state.from.search || ''}` 
+              : (location.state?.from || '/home');
+            navigate(destination, { replace: true });
+            return;
+          }
+        } catch (authErr) {
+          console.warn('Erro ao realizar login automático:', authErr);
+        }
+
+        // Fallback para login manual caso o auto-login não complete
+        navigate('/login', { replace: true, state: { from: location.state?.from } });
       } else {
         const data = await res.json();
         setError(data.message || 'Erro ao realizar o cadastro.');
@@ -114,6 +131,18 @@ const Register = () => {
           {isLoading ? 'Cadastrando...' : 'Cadastrar'}
           {!isLoading && <ArrowRight size={20} />}
         </button>
+
+        <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <p style={{ color: '#777', fontSize: '14px' }}>
+            Já tem uma conta?{' '}
+            <span 
+              onClick={() => navigate('/login', { state: { from: location.state?.from } })} 
+              style={{ color: 'var(--accent-color)', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              Entrar
+            </span>
+          </p>
+        </div>
       </form>
     </div>
   );

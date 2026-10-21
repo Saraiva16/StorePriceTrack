@@ -8,6 +8,8 @@ import EstimatePurchase from './pages/EstimatePurchase';
 import ShoppingCart from './pages/ShoppingCart';
 import EventPlanning from './pages/EventPlanning';
 import EventDashboard from './pages/EventDashboard';
+import TripList from './pages/TripList';
+import TripDetails from './pages/TripDetails';
 import UsersManagement from './pages/UsersManagement';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -56,6 +58,16 @@ function AppContent() {
         <Route path="/event/dashboard" element={
           <ProtectedRoute>
             <EventDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/trips" element={
+          <ProtectedRoute>
+            <TripList />
+          </ProtectedRoute>
+        } />
+        <Route path="/trips/:tripId" element={
+          <ProtectedRoute>
+            <TripDetails />
           </ProtectedRoute>
         } />
         <Route path="/users" element={

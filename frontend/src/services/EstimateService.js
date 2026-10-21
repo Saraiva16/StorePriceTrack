@@ -45,3 +45,27 @@ export const recalculatePrices = async (marketName, productNames) => {
   });
   return res.json();
 };
+
+export const createProduct = async (productData) => {
+  try {
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        normalizedName: productData.normalizedName || productData.name,
+        brand: productData.brand || null,
+        unitMeasure: productData.unitMeasure || 'un',
+        categoryId: productData.categoryId || null
+      })
+    });
+    if (!res.ok) {
+      console.warn('Backend rejected product creation, fallback to local item');
+      return null;
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('Failed to create product in master catalog', err);
+    return null;
+  }
+};
+

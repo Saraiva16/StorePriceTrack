@@ -1,6 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
+import { maskCurrencyInput, parseCurrencyToNumber, formatCurrency } from '../../utils/currency';
 import './ProductsTable.css';
+
+function PriceCell({ item, onUpdateItem }) {
+  const [val, setVal] = useState(formatCurrency(item.unitPrice));
+
+  useEffect(() => {
+    setVal(formatCurrency(item.unitPrice));
+  }, [item.unitPrice]);
+
+  const handleChange = (e) => {
+    const masked = maskCurrencyInput(e.target.value);
+    setVal(masked || '0,00');
+    const num = parseCurrencyToNumber(masked);
+    onUpdateItem(item.id, { unitPrice: num, isCustomPrice: true });
+  };
+
+  return (
+    <div className="price-input-wrapper">
+      <span className="price-prefix">R$</span>
+      <input 
+        type="text" 
+        inputMode="numeric"
+        value={val} 
+        onFocus={(e) => e.target.select()}
+        onChange={handleChange}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.target.blur();
+          }
+        }}
+        className="cell-input price-input"
+        title="Clique para editar o valor estimado"
+      />
+    </div>
+  );
+}
 
 export default function ProductsTable({ items, onUpdateItem, onRemoveItem }) {
   return (
@@ -21,7 +57,16 @@ export default function ProductsTable({ items, onUpdateItem, onRemoveItem }) {
           <tbody>
             {items.map(item => (
               <tr key={item.id}>
-                <td>{item.name}</td>
+                <td>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: 500 }}>{item.name}</span>
+                    {item.addedByName && (
+                      <span style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
+                        por @{item.addedByName}
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td>
                   <input 
                     type="text" 
@@ -41,15 +86,11 @@ export default function ProductsTable({ items, onUpdateItem, onRemoveItem }) {
                   />
                 </td>
                 <td>
-                  <input 
-                    type="text" 
-                    value={`R$ ${Number(item.unitPrice).toFixed(2).replace('.', ',')}`}
-                    readOnly
-                    className="cell-input price-input"
-                    style={{ backgroundColor: '#f0f0f0', color: '#666', border: '1px solid #ddd', cursor: 'not-allowed' }}
-                  />
+                  <PriceCell item={item} onUpdateItem={onUpdateItem} />
                 </td>
-                <td className="total-cell">R$ {(item.qty * item.unitPrice).toFixed(2).replace('.', ',')}</td>
+                <td className="total-cell">
+                  R$ {((Number(item.qty) || 0) * (Number(item.unitPrice) || 0)).toFixed(2).replace('.', ',')}
+                </td>
                 <td>
                   <button className="delete-btn" onClick={() => onRemoveItem(item.id)}>
                     <Trash2 size={16} />
@@ -68,3 +109,4 @@ export default function ProductsTable({ items, onUpdateItem, onRemoveItem }) {
     </div>
   );
 }
+

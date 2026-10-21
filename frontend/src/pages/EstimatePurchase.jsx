@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, Search, Plus, Minus, Trash2, Filter, X, ShoppingCart, CheckCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { fetchNetworks, fetchProducts, recalculatePrices } from '../services/EstimateService';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { fetchNetworks, fetchProducts, recalculatePrices, createProduct } from '../services/EstimateService';
 import { addItemToCart, closeCart, uploadReceipt, getComparisonReport } from '../services/ShoppingListService';
+import { 
+  fetchTripShoppingItems, 
+  addTripShoppingItem, 
+  updateTripShoppingItem, 
+  deleteTripShoppingItem, 
+  clearTripShoppingItems 
+} from '../services/TripShoppingService';
+import { parseCurrencyToNumber } from '../utils/currency';
 import ProductsTable from '../components/ProductsTable/ProductsTable';
 import BottomSheet from '../components/BottomSheet/BottomSheet';
 import ReceiptUploadSheet from '../components/BottomSheet/ReceiptUploadSheet';
@@ -11,6 +19,10 @@ import './EstimatePurchase.css';
 
 export default function EstimatePurchase() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const tripId = location.state?.tripId || queryParams.get('tripId');
+  const tripDestination = location.state?.tripDestination || queryParams.get('tripDestination');
   const todayISO = new Date().toISOString().split('T')[0];
   const [market, setMarket] = useState('');
   const [marketsList, setMarketsList] = useState([]);
@@ -65,6 +77,9 @@ export default function EstimatePurchase() {
     recalculatePrices(market, Array.from(namesToCalculate))
       .then(newPrices => {
         setItems(prevItems => prevItems.map(item => {
+          if (item.isCustomPrice && item.unitPrice > 0) {
+            return item;
+          }
           if (newPrices[item.name] !== undefined) {
             return { ...item, unitPrice: newPrices[item.name] };
           }
@@ -94,35 +109,198 @@ export default function EstimatePurchase() {
     }
   };
 
-  const handleAddItem = (e) => {
-    e.preventDefault();
-    if (!newProduct.trim()) return;
+  const handleAddItem = async (e) => {
+    if (e) e.preventDefault();
+    const trimmed = newProduct.trim();
+    if (!trimmed) return;
     invalidateCartState();
     
-    const newItem = {
-      id: Date.now(),
-      name: newProduct,
-      qty: 1,
-      unitPrice: 0.00
-    };
-    setItems([...items, newItem]);
+    let matched = productsList.find(p => p.name.toLowerCase() === trimmed.toLowerCase());
+    if (!matched) {
+      const created = await createProduct({ normalizedName: trimmed });
+      if (created && created.id) {
+        matched = {
+          id: created.id,
+          name: created.normalizedName || trimmed,
+          category: created.categoryName || 'Outros',
+          price: 0.00
+        };
+        setProductsList(prev => [...prev, matched]);
+      }
+    }
+
+    if (tripId) {
+      try {
+        const savedDto = await addTripShoppingItem(tripId, {
+          name: matched ? matched.name : trimmed,
+          quantity: 1,
+          unitPrice: matched ? matched.price : 0.00,
+          category: matched ? matched.category : 'Outros',
+          isCustomPrice: false
+        });
+
+        const newItem = {
+          id: savedDto.id,
+          name: savedDto.name,
+          qty: Number(savedDto.quantity) || 1,
+          unitPrice: Number(savedDto.unitPrice) || 0.00,
+          category: savedDto.category,
+          isCustomPrice: savedDto.isCustomPrice,
+          addedByName: savedDto.addedByName
+        };
+
+        setItems(prev => {
+          const idx = prev.findIndex(i => i.id === savedDto.id || i.name.toLowerCase() === savedDto.name.toLowerCase());
+          if (idx >= 0) {
+            return prev.map((it, i) => i === idx ? newItem : it);
+          }
+          return [...prev, newItem];
+        });
+        setNewProduct('');
+        return;
+      } catch (err) {
+        console.error("Erro ao salvar item na viagem:", err);
+      }
+    }
+
+    const existing = items.find(i => i.name.toLowerCase() === trimmed.toLowerCase());
+    if (existing) {
+      handleUpdateItem(existing.id, 'qty', (Number(existing.qty) || 0) + 1);
+    } else {
+      const newItem = {
+        id: matched ? matched.id : Date.now() + Math.random(),
+        name: matched ? matched.name : trimmed,
+        qty: 1,
+        unitPrice: matched ? matched.price : 0.00,
+        category: matched ? matched.category : 'Outros'
+      };
+      setItems(prev => [...prev, newItem]);
+    }
+
     setNewProduct('');
   };
 
-  const handleAddFromSheet = (product) => {
+  const handleAddCustomProduct = async ({ name, price, qty = 1, category = 'Outros' }) => {
     invalidateCartState();
-    // Verifica se já existe
+    const cleanPrice = typeof price === 'number' ? price : parseCurrencyToNumber(price);
+    const cleanQty = Math.max(1, Number(qty) || 1);
+    const trimmed = name.trim();
+
+    let matched = productsList.find(p => p.name.toLowerCase() === trimmed.toLowerCase());
+    if (!matched) {
+      const created = await createProduct({ normalizedName: trimmed });
+      if (created && created.id) {
+        matched = {
+          id: created.id,
+          name: created.normalizedName || trimmed,
+          category: created.categoryName || category,
+          price: cleanPrice
+        };
+        setProductsList(prev => [...prev, matched]);
+      }
+    }
+
+    if (tripId) {
+      try {
+        const savedDto = await addTripShoppingItem(tripId, {
+          name: matched ? matched.name : trimmed,
+          quantity: cleanQty,
+          unitPrice: cleanPrice,
+          category: matched ? matched.category : category,
+          isCustomPrice: cleanPrice > 0
+        });
+
+        const newItem = {
+          id: savedDto.id,
+          name: savedDto.name,
+          qty: Number(savedDto.quantity) || cleanQty,
+          unitPrice: Number(savedDto.unitPrice) || cleanPrice,
+          category: savedDto.category,
+          isCustomPrice: savedDto.isCustomPrice,
+          addedByName: savedDto.addedByName
+        };
+
+        setItems(prev => {
+          const idx = prev.findIndex(i => i.id === savedDto.id || i.name.toLowerCase() === savedDto.name.toLowerCase());
+          if (idx >= 0) {
+            return prev.map((it, i) => i === idx ? newItem : it);
+          }
+          return [...prev, newItem];
+        });
+        return;
+      } catch (err) {
+        console.error("Erro ao salvar item customizado na viagem:", err);
+      }
+    }
+
+    const existing = items.find(i => i.name.toLowerCase() === trimmed.toLowerCase());
+    if (existing) {
+      handleUpdateItem(existing.id, {
+        qty: (Number(existing.qty) || 0) + cleanQty,
+        ...(cleanPrice > 0 ? { unitPrice: cleanPrice, isCustomPrice: true } : {})
+      });
+      return;
+    }
+
+    const newItem = {
+      id: matched ? matched.id : Date.now() + Math.random(),
+      name: matched ? matched.name : trimmed,
+      qty: cleanQty,
+      unitPrice: cleanPrice,
+      isCustomPrice: cleanPrice > 0,
+      category: matched ? matched.category : category
+    };
+
+    setItems(prev => [...prev, newItem]);
+  };
+
+  const handleAddFromSheet = async (product) => {
+    invalidateCartState();
+    if (tripId) {
+      try {
+        const savedDto = await addTripShoppingItem(tripId, {
+          name: product.name,
+          quantity: 1,
+          unitPrice: product.price || 0.00,
+          category: product.category,
+          isCustomPrice: false
+        });
+
+        const newItem = {
+          id: savedDto.id,
+          name: savedDto.name,
+          qty: Number(savedDto.quantity) || 1,
+          unitPrice: Number(savedDto.unitPrice) || 0.00,
+          category: savedDto.category,
+          isCustomPrice: savedDto.isCustomPrice,
+          addedByName: savedDto.addedByName
+        };
+
+        setItems(prev => {
+          const idx = prev.findIndex(i => i.id === savedDto.id || i.name.toLowerCase() === savedDto.name.toLowerCase());
+          if (idx >= 0) {
+            return prev.map((it, i) => i === idx ? newItem : it);
+          }
+          return [...prev, newItem];
+        });
+        return;
+      } catch (err) {
+        console.error("Erro ao adicionar produto da lista na viagem:", err);
+      }
+    }
+
     const existing = items.find(i => i.name === product.name);
     if (existing) {
-      handleUpdateItem(existing.id, 'qty', existing.qty + 1);
+      handleUpdateItem(existing.id, 'qty', (Number(existing.qty) || 0) + 1);
     } else {
       const newItem = {
         id: Date.now() + Math.random(),
         name: product.name,
         qty: 1,
-        unitPrice: product.price
+        unitPrice: product.price || 0.00,
+        category: product.category
       };
-      setItems([...items, newItem]);
+      setItems(prev => [...prev, newItem]);
     }
   };
 
@@ -140,39 +318,90 @@ export default function EstimatePurchase() {
 
   const handleRemoveItem = (id) => {
     invalidateCartState();
-    setItems(items.filter(item => item.id !== id));
+    setItems(prevItems => prevItems.filter(item => item.id !== id));
+    if (tripId) {
+      deleteTripShoppingItem(tripId, id)
+        .catch(err => console.error("Erro ao remover item da viagem:", err));
+    }
   };
 
-  const handleUpdateItem = (id, field, value) => {
+  const handleUpdateItem = (id, fieldOrObj, value) => {
     invalidateCartState();
-    setItems(items.map(item => {
+    let updatedItem = null;
+    setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
-        return { ...item, [field]: value };
+        if (typeof fieldOrObj === 'object' && fieldOrObj !== null) {
+          updatedItem = { ...item, ...fieldOrObj };
+        } else {
+          updatedItem = { ...item, [fieldOrObj]: value };
+        }
+        return updatedItem;
       }
       return item;
     }));
+
+    if (tripId && updatedItem) {
+      updateTripShoppingItem(tripId, id, {
+        name: updatedItem.name,
+        quantity: updatedItem.qty,
+        unitPrice: updatedItem.unitPrice,
+        category: updatedItem.category,
+        isCustomPrice: updatedItem.isCustomPrice
+      }).catch(err => console.error("Erro ao atualizar item da viagem no backend:", err));
+    }
   };
 
-  // Persist items in localStorage so it stays over days
+  // Carregamento inicial de itens: Viagem (Backend) vs Pessoal (LocalStorage)
   useEffect(() => {
-    const saved = localStorage.getItem('estimate_cart_items');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Filter out any null or invalid items
-          const validItems = parsed.filter(item => item && item.id && item.name);
-          setItems(validItems);
+    if (tripId) {
+      fetchTripShoppingItems(tripId)
+        .then(tripItems => {
+          if (Array.isArray(tripItems)) {
+            const mapped = tripItems.map(ti => ({
+              id: ti.id,
+              name: ti.name,
+              qty: Number(ti.quantity) || 1,
+              unitPrice: Number(ti.unitPrice) || 0,
+              category: ti.category || 'Outros',
+              isCustomPrice: ti.isCustomPrice ?? true,
+              addedByName: ti.addedByName
+            }));
+            setItems(mapped);
+          }
+        })
+        .catch(err => {
+          console.error("Erro ao carregar lista de compras da viagem", err);
+          const saved = localStorage.getItem(`estimate_cart_items_trip_${tripId}`);
+          if (saved) {
+            try {
+              setItems(JSON.parse(saved));
+            } catch (e) {}
+          }
+        });
+    } else {
+      const saved = localStorage.getItem('estimate_cart_items_personal') || localStorage.getItem('estimate_cart_items');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const validItems = parsed.filter(item => item && item.id && item.name);
+            setItems(validItems);
+          }
+        } catch (e) {
+          console.error("Erro ao carregar lista pessoal", e);
         }
-      } catch (e) {
-        console.error("Error parsing cart items", e);
       }
     }
-  }, []);
+  }, [tripId]);
 
+  // Salva no localStorage separado para evitar colisão entre lista pessoal e lista de viagem
   useEffect(() => {
-    localStorage.setItem('estimate_cart_items', JSON.stringify(items));
-  }, [items]);
+    if (tripId) {
+      localStorage.setItem(`estimate_cart_items_trip_${tripId}`, JSON.stringify(items));
+    } else {
+      localStorage.setItem('estimate_cart_items_personal', JSON.stringify(items));
+    }
+  }, [items, tripId]);
 
   const handleCloseCart = async () => {
     setProcessingCart(true);
@@ -243,6 +472,10 @@ export default function EstimatePurchase() {
       setComparisonReport(null);
       setSuggestedDate('');
       setSavingsPercentage(null);
+      if (tripId) {
+        clearTripShoppingItems(tripId)
+          .catch(err => console.error("Erro ao limpar lista da viagem no backend:", err));
+      }
     }
   };
 
@@ -260,12 +493,35 @@ export default function EstimatePurchase() {
   return (
     <div className="page-container animate-slide-up estimate-page">
       <div className="header-bar">
-        <button className="icon-btn" onClick={() => navigate('/home')}>
+        <button className="icon-btn" onClick={() => tripId ? navigate(`/trips/${tripId}`) : navigate('/home')}>
           <ChevronLeft size={28} />
         </button>
-        <h2>Estimativa</h2>
+        <h2>{tripId ? 'Lista da Viagem' : 'Estimativa Pessoal'}</h2>
         <div style={{ width: 28 }}></div>
       </div>
+
+      {tripId && (
+        <div style={{
+          backgroundColor: '#e6f7f4',
+          border: '1px solid #2a9d8f',
+          borderRadius: '14px',
+          padding: '12px 14px',
+          marginBottom: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px',
+          fontSize: '13px',
+          color: '#264653'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, fontSize: '14px' }}>
+            <span style={{ fontSize: '16px' }}>✈️</span>
+            <span>Lista compartilhada para: <strong>{tripDestination || 'Viagem'}</strong></span>
+          </div>
+          <div style={{ color: '#52796f', fontSize: '12px' }}>
+            👥 Todos os amigos desta viagem podem visualizar e colaborar nesta lista em tempo real.
+          </div>
+        </div>
+      )}
 
       <div className="estimate-controls">
         <div className="control-group">
@@ -384,6 +640,7 @@ export default function EstimatePurchase() {
         items={items}
         onAddFromSheet={handleAddFromSheet}
         onRemoveFromSheet={handleRemoveFromSheet}
+        onAddCustomProduct={handleAddCustomProduct}
       />
 
       <ReceiptUploadSheet 
