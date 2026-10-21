@@ -567,7 +567,7 @@ export default function TripDetails() {
         {/* Card 1: Lista de Mercado */}
         <div 
           className="hub-card market-theme"
-          onClick={() => navigate('/estimate', { state: { tripId: trip.id, tripDestination: trip.destination } })}
+          onClick={() => navigate(`/estimate?tripId=${trip.id}&tripDestination=${encodeURIComponent(trip.destination || '')}`, { state: { tripId: trip.id, tripDestination: trip.destination } })}
           role="button"
           tabIndex={0}
         >
@@ -579,7 +579,7 @@ export default function TripDetails() {
             <p>Conectada ao estimador de preços. Planeje os produtos e suprimentos que não podem faltar.</p>
             <div className="hub-badge-pill">
               <Sparkles size={14} />
-              <span>Conectado ao Fluxo de Compras</span>
+              <span>Lista Compartilhada do Grupo</span>
             </div>
           </div>
           <div className="hub-arrow-container">

@@ -16,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -47,10 +49,15 @@ public class ProductsMasterService implements IProductsMasterService {
     @CacheEvict(value = "products", allEntries = true)
     public ProductMasterDTO create(String normalizedName, String brand, String unitMeasure, Long categoryId) {
         log.info("Creating product: {}", normalizedName);
+        String trimmed = normalizedName != null ? normalizedName.trim() : "";
+        Optional<ProductsMasterEntity> existing = repository.findFirstByNormalizedNameIgnoreCase(trimmed);
+        if (existing.isPresent()) {
+            return toDTO(existing.get());
+        }
         ProductsMasterEntity entity = new ProductsMasterEntity();
-        entity.setNormalizedName(normalizedName);
+        entity.setNormalizedName(trimmed);
         entity.setBrand(brand);
-        entity.setUnitMeasure(unitMeasure);
+        entity.setUnitMeasure(unitMeasure != null && !unitMeasure.isBlank() ? unitMeasure : "un");
         entity.setCategory(resolveCategory(categoryId));
         return toDTO(repository.save(entity));
     }
