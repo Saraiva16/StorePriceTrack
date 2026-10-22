@@ -104,3 +104,91 @@
   color: #aaa;
   padding: 24px 0;
 }
+
+/* Custom Checkbox */
+.checkbox-custom-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  width: 22px;
+  height: 22px;
+}
+
+.checkbox-custom-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkbox-custom-mark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 20px;
+  width: 20px;
+  background-color: #fff;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.checkbox-custom-container:hover .checkbox-custom-mark {
+  border-color: #e63946;
+}
+
+.checkbox-custom-input:checked ~ .checkbox-custom-mark {
+  background-color: #e63946;
+  border-color: #e63946;
+}
+
+.checkbox-custom-mark:after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox-custom-input:checked ~ .checkbox-custom-mark:after {
+  display: block;
+}
+
+/* Linha marcada: Risco estrito em vermelho */
+.products-table tr.item-row-checked td {
+  background-color: #fff5f5;
+  transition: all 0.2s ease;
+}
+
+.products-table tr.item-row-checked .product-title-text {
+  text-decoration: line-through;
+  text-decoration-color: #e63946;
+  text-decoration-thickness: 2px;
+  color: #e63946 !important;
+  font-weight: 600;
+}
+
+.products-table tr.item-row-checked .product-author-text,
+.products-table tr.item-row-checked .total-cell {
+  text-decoration: line-through;
+  text-decoration-color: #e63946;
+  color: #e63946 !important;
+  opacity: 0.85;
+}
+
+.products-table tr.item-row-checked .cell-input {
+  background-color: #ffebeb;
+  border-color: #ffccd5;
+  color: #e63946;
+  text-decoration: line-through;
+  text-decoration-color: #e63946;
+}

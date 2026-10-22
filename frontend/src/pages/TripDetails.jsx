@@ -62,6 +62,7 @@ export default function TripDetails() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     destination: '',
+    address: '',
     startDate: '',
     startTime: '08:00',
     endDate: '',
@@ -87,6 +88,7 @@ export default function TripDetails() {
     if (!trip) return;
     setEditFormData({
       destination: trip.destination || '',
+      address: trip.address || '',
       startDate: trip.startDate || '',
       startTime: trip.startTime || '08:00',
       endDate: trip.endDate || '',
@@ -212,14 +214,17 @@ export default function TripDetails() {
   // Enviar pelo WhatsApp
   const handleShareWhatsApp = () => {
     const shareUrl = `${window.location.origin}/trips/${trip.id}`;
-    const text = `Bora viajar para ${trip.destination}? Acesse os detalhes da viagem, lista de compras e divisão de gastos: ${shareUrl}`;
+    const destinationDesc = trip.address ? `${trip.destination} (${trip.address})` : trip.destination;
+    const text = `Bora viajar para ${destinationDesc}? Acesse os detalhes da viagem, lista de compras e divisão de gastos: ${shareUrl}`;
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
   };
 
   // Seleciona app de navegação e já inicia a viagem imediatamente
   const handleSelectNavAppAndStart = (appType) => {
-    const destinationQuery = encodeURIComponent(trip.destination);
+    // Prioriza o campo de Endereço exato para o Waze, Maps e outros buscarem o destino correto
+    const targetQuery = (trip.address && trip.address.trim().length > 0) ? trip.address.trim() : trip.destination;
+    const destinationQuery = encodeURIComponent(targetQuery);
     let targetUrl = '';
 
     switch (appType) {
@@ -395,6 +400,11 @@ export default function TripDetails() {
             <span className="destination-pin-icon">📍</span>
             <div className="destination-title-wrapper">
               <div className="destination-name-text">{trip.destination}</div>
+              {trip.address && (
+                <div className="destination-address-text" style={{ fontSize: '13px', color: '#7d796e', marginTop: '2px', wordBreak: 'break-word' }}>
+                  📍 {trip.address}
+                </div>
+              )}
               {isOrganizer && (
                 <button 
                   className="btn-inline-pencil" 
@@ -590,9 +600,7 @@ export default function TripDetails() {
         {/* Card 2: Dividir Gastos */}
         <div 
           className="hub-card expenses-theme"
-          onClick={() => {
-            alert('Módulo de Divisão de Gastos: pronto para definir o rateio entre os ' + acceptedFriends.length + ' amigos confirmados!');
-          }}
+          onClick={() => navigate(`/trips/${trip.id}/expenses`)}
           role="button"
           tabIndex={0}
         >
@@ -867,6 +875,22 @@ export default function TripDetails() {
                 {editErrors.destination && <span className="field-error-text">{editErrors.destination}</span>}
               </div>
 
+              {/* Campo Endereço (GPS / Mapas) */}
+              <div className="form-group">
+                <label htmlFor="edit-address">Endereço (usado no GPS e Mapas) <span style={{ color: '#e07a5f' }}>*</span></label>
+                <div className="input-with-icon">
+                  <input
+                    id="edit-address"
+                    type="text"
+                    className="input-field"
+                    placeholder="Ex: Rua das Flores, 123 ou ponto exato"
+                    value={editFormData.address}
+                    onChange={(e) => handleEditChange('address', e.target.value)}
+                  />
+                </div>
+                {editErrors.address && <span className="field-error-text">{editErrors.address}</span>}
+              </div>
+
               {/* Início da Viagem */}
               <div className="datetime-card">
                 <div className="datetime-header">
@@ -879,6 +903,7 @@ export default function TripDetails() {
                     <label className="sub-field-label">Data de Chegada</label>
                     <input
                       type="date"
+                      min={new Date().toISOString().split('T')[0]}
                       className="input-field mobile-date-input"
                       value={editFormData.startDate}
                       onChange={(e) => handleEditStartDateChange(e.target.value)}

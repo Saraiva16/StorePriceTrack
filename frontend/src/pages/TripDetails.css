@@ -1035,7 +1035,10 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .datetime-header {
@@ -1055,6 +1058,9 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .datetime-field-group {
@@ -1062,6 +1068,9 @@
   flex-direction: column;
   gap: 6px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .sub-field-label {
@@ -1075,6 +1084,9 @@
 .input-field {
   width: 100%;
   box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  display: block;
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid #d4cebe;
@@ -1093,8 +1105,18 @@
   box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.15);
 }
 
-.mobile-date-input {
+.mobile-date-input,
+.mobile-time-input {
+  /* Evita zoom e transbordamento horizontal no Safari iOS */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
   font-size: 15px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: block;
 }
 
 .input-with-icon {

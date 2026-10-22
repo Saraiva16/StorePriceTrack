@@ -69,6 +69,7 @@ public class TripShoppingItemService {
                     .unitPrice(unitPrice)
                     .category(request.category() != null && !request.category().isBlank() ? request.category() : "Outros")
                     .isCustomPrice(request.isCustomPrice() != null ? request.isCustomPrice() : unitPrice.compareTo(BigDecimal.ZERO) > 0)
+                    .checked(request.checked() != null ? request.checked() : false)
                     .addedBy(user)
                     .build();
         }
@@ -101,6 +102,9 @@ public class TripShoppingItemService {
         }
         if (request.isCustomPrice() != null) {
             item.setIsCustomPrice(request.isCustomPrice());
+        }
+        if (request.checked() != null) {
+            item.setChecked(request.checked());
         }
 
         TripShoppingItemEntity saved = shoppingItemRepository.save(item);
@@ -143,6 +147,7 @@ public class TripShoppingItemService {
                 entity.getUnitPrice(),
                 entity.getCategory(),
                 entity.getIsCustomPrice(),
+                entity.getChecked() != null ? entity.getChecked() : false,
                 addedByUserId,
                 addedByName,
                 entity.getCreatedAt()

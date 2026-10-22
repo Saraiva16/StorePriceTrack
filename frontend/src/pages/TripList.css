@@ -279,7 +279,7 @@
   color: var(--text-dark);
 }
 
-/* DateTime Card & Grid: Separação nítida sem grudar */
+/* DateTime Card & Grid: Separação nítida sem grudar e sem transbordar em telas mobile */
 .datetime-card {
   background: white;
   border: 1px solid #e5dfd3;
@@ -289,6 +289,8 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
@@ -311,6 +313,9 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .datetime-field-group {
@@ -318,6 +323,9 @@
   flex-direction: column;
   gap: 6px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .sub-field-label {
@@ -332,6 +340,8 @@
   width: 100%;
   box-sizing: border-box;
   max-width: 100%;
+  min-width: 0;
+  display: block;
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid #d4cebe;
@@ -350,9 +360,18 @@
   box-shadow: 0 0 0 3px rgba(224, 122, 95, 0.15);
 }
 
-.mobile-date-input {
-  /* Evita zoom automático no Safari iOS mantendo fonte >= 16px */
+.mobile-date-input,
+.mobile-time-input {
+  /* Evita zoom e transbordamento horizontal no Safari iOS */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
   font-size: 15px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: block;
 }
 
 /* Counter Picker com Input Direto + Botões */

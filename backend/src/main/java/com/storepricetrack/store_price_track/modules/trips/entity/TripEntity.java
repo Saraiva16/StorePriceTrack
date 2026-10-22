@@ -27,6 +27,9 @@ public class TripEntity {
     @Column(nullable = false)
     private String destination;
 
+    @Column(name = "address", nullable = false, columnDefinition = "VARCHAR(255) DEFAULT ''")
+    private String address;
+
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 

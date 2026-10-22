@@ -10,6 +10,7 @@ import EventPlanning from './pages/EventPlanning';
 import EventDashboard from './pages/EventDashboard';
 import TripList from './pages/TripList';
 import TripDetails from './pages/TripDetails';
+import TripExpenses from './pages/TripExpenses';
 import UsersManagement from './pages/UsersManagement';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -68,6 +69,11 @@ function AppContent() {
         <Route path="/trips/:tripId" element={
           <ProtectedRoute>
             <TripDetails />
+          </ProtectedRoute>
+        } />
+        <Route path="/trips/:tripId/expenses" element={
+          <ProtectedRoute>
+            <TripExpenses />
           </ProtectedRoute>
         } />
         <Route path="/users" element={

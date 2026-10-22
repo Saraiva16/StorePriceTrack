@@ -346,7 +346,8 @@ export default function EstimatePurchase() {
         quantity: updatedItem.qty,
         unitPrice: updatedItem.unitPrice,
         category: updatedItem.category,
-        isCustomPrice: updatedItem.isCustomPrice
+        isCustomPrice: updatedItem.isCustomPrice,
+        checked: updatedItem.checked
       }).catch(err => console.error("Erro ao atualizar item da viagem no backend:", err));
     }
   };
@@ -364,6 +365,7 @@ export default function EstimatePurchase() {
               unitPrice: Number(ti.unitPrice) || 0,
               category: ti.category || 'Outros',
               isCustomPrice: ti.isCustomPrice ?? true,
+              checked: Boolean(ti.checked),
               addedByName: ti.addedByName
             }));
             setItems(mapped);

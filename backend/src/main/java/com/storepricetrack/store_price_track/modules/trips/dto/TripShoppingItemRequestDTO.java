@@ -17,5 +17,7 @@ public record TripShoppingItemRequestDTO(
         String category,
 
         @JsonAlias({"is_custom_price", "isCustomPrice"})
-        Boolean isCustomPrice
+        Boolean isCustomPrice,
+
+        Boolean checked
 ) {}

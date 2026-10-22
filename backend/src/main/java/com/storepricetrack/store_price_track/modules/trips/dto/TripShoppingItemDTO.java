@@ -11,6 +11,7 @@ public record TripShoppingItemDTO(
         BigDecimal unitPrice,
         String category,
         Boolean isCustomPrice,
+        Boolean checked,
         Long addedByUserId,
         String addedByName,
         LocalDateTime createdAt
