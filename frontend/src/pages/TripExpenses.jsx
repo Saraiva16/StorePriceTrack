@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { 
   ArrowLeft, 
@@ -31,6 +31,7 @@ import './TripExpenses.css';
 export default function TripExpenses() {
   const { tripId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const currentUserId = user?.id;
 
@@ -49,9 +50,10 @@ export default function TripExpenses() {
   const [expandedDebts, setExpandedDebts] = useState({});
 
   // Modal Novo Gasto
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
+  const prefill = location.state;
+  const [isModalOpen, setIsModalOpen] = useState(Boolean(prefill?.prefillDescription));
+  const [description, setDescription] = useState(prefill?.prefillDescription || '');
+  const [amount, setAmount] = useState(prefill?.prefillAmount ? Number(prefill.prefillAmount).toFixed(2).replace('.', ',') : '');
   const todayStr = new Date().toISOString().split('T')[0];
   const [expenseDate, setExpenseDate] = useState(todayStr);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
@@ -73,6 +75,13 @@ export default function TripExpenses() {
       setTrip(tripData);
       setExpenses(expensesData);
       setDebts(debtsData);
+
+      if (prefill?.prefillDescription) {
+        const validIds = (tripData?.participants || [])
+          .map(p => p.userId)
+          .filter(id => id != null);
+        setSelectedUserIds(validIds);
+      }
 
       // Descobre chave pix atual do usuário logado se presente nos dados
       const currentUserExpense = expensesData.find(e => e.paidByUserId === currentUserId);
