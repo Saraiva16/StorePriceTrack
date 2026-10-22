@@ -51,6 +51,10 @@ export const validateTripData = (data) => {
     errors.destination = 'Informe o destino da viagem.';
   }
 
+  if (!data.address || data.address.trim().length === 0) {
+    errors.address = 'Informe o endereço da viagem.';
+  }
+
   if (!data.startDate) {
     errors.startDate = 'Informe a data de início.';
   } else if (data.startDate < todayStr) {
@@ -91,6 +95,7 @@ const normalizeTripDto = (data) => {
     ...data,
     id: data.id,
     destination: data.destination,
+    address: data.address || '',
     startDate: data.startDate || data.start_date,
     startTime: data.startTime || data.start_time,
     endDate: data.endDate || data.end_date,
@@ -171,6 +176,7 @@ export const createTrip = async (tripData) => {
 
   const payload = {
     destination: tripData.destination.trim(),
+    address: tripData.address.trim(),
     start_date: tripData.startDate,
     start_time: tripData.startTime || '08:00',
     end_date: tripData.endDate,
@@ -269,6 +275,7 @@ export const updateTrip = async (tripId, tripData) => {
 
   const payload = {
     destination: tripData.destination.trim(),
+    address: tripData.address ? tripData.address.trim() : '',
     start_date: tripData.startDate,
     start_time: tripData.startTime || '08:00',
     end_date: tripData.endDate,

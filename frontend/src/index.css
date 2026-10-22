@@ -22,6 +22,22 @@
   padding: 0;
 }
 
+/* Normalização de inputs de data e horário para iOS Safari / WebKit */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.2em;
+}
+
 body {
   font-family: 'Outfit', sans-serif;
   background-color: #1e1e1e;

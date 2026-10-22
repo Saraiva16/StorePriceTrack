@@ -29,6 +29,7 @@ export default function TripList() {
   // Form State
   const [formData, setFormData] = useState({
     destination: '',
+    address: '',
     startDate: '',
     startTime: '08:00',
     endDate: '',
@@ -48,6 +49,7 @@ export default function TripList() {
   const handleOpenModal = () => {
     setFormData({
       destination: '',
+      address: '',
       startDate: todayStr,
       startTime: '08:00',
       endDate: todayStr,
@@ -168,7 +170,7 @@ export default function TripList() {
           <div className="dashed-card-icon">
             <Plus size={32} />
           </div>
-          <div className="dashed-card-title">+ Novo Evento</div>
+          <div className="dashed-card-title">Novo Evento</div>
           <p className="dashed-card-desc">
             Nenhuma viagem ativa ou agendada. Toque aqui para planejar sua primeira viagem com amigos!
           </p>
@@ -220,7 +222,7 @@ export default function TripList() {
           {/* Botão tracejado secundário para permitir criar novas viagens mesmo já tendo algumas */}
           <button className="dashed-btn-add" onClick={handleOpenModal}>
             <Plus size={18} />
-            + Novo Evento
+            Novo Evento
           </button>
         </div>
       )}
@@ -257,6 +259,21 @@ export default function TripList() {
                   />
                 </div>
                 {formErrors.destination && <span className="form-error">{formErrors.destination}</span>}
+              </div>
+
+              {/* Endereço Obrigatório */}
+              <div className="form-group">
+                <label>Endereço <span style={{ color: '#e07a5f' }}>*</span></label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Ex: Rua das Flores, 123 ou ponto de referência exato"
+                    value={formData.address}
+                    onChange={e => handleChange('address', e.target.value)}
+                  />
+                </div>
+                {formErrors.address && <span className="form-error">{formErrors.address}</span>}
               </div>
 
               {/* Bloco 1: Início da Viagem */}

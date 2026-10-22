@@ -22,6 +22,10 @@ public class TripRequestDto {
     @NotBlank(message = "O destino da viagem é obrigatório")
     private String destination;
 
+    @NotBlank(message = "O endereço da viagem é obrigatório")
+    @JsonAlias({"address"})
+    private String address;
+
     @NotNull(message = "A data de início é obrigatória")
     @JsonFormat(pattern = "yyyy-MM-dd")
     @JsonAlias({"start_date", "startDate"})

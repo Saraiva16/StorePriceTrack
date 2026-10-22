@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -36,12 +37,17 @@ public class TripService {
 
     @Transactional
     public TripResponseDto createTrip(TripRequestDto request, User user) {
+        LocalDate today = LocalDate.now();
+        if (request.getStartDate().isBefore(today)) {
+            throw new IllegalArgumentException("A data de início da viagem não pode ser anterior à data de hoje.");
+        }
         if (request.getStartDate().isAfter(request.getEndDate())) {
             throw new IllegalArgumentException("A data de término não pode ser anterior à data de início.");
         }
 
         TripEntity trip = TripEntity.builder()
                 .destination(request.getDestination().trim())
+                .address(request.getAddress() != null ? request.getAddress().trim() : "")
                 .startDate(request.getStartDate())
                 .startTime(request.getStartTime())
                 .endDate(request.getEndDate())
@@ -156,6 +162,10 @@ public class TripService {
     public TripResponseDto updateTrip(Long tripId, TripRequestDto request, User user) {
         TripEntity trip = getTripAndVerifyOrganizer(tripId, user);
 
+        LocalDate today = LocalDate.now();
+        if (request.getStartDate().isBefore(today) && !request.getStartDate().equals(trip.getStartDate())) {
+            throw new IllegalArgumentException("A nova data de início não pode ser anterior à data de hoje.");
+        }
         if (request.getStartDate().isAfter(request.getEndDate())) {
             throw new IllegalArgumentException("A data de término não pode ser anterior à data de início.");
         }
@@ -170,6 +180,9 @@ public class TripService {
         }
 
         trip.setDestination(request.getDestination().trim());
+        if (request.getAddress() != null && !request.getAddress().trim().isEmpty()) {
+            trip.setAddress(request.getAddress().trim());
+        }
         trip.setStartDate(request.getStartDate());
         trip.setStartTime(request.getStartTime());
         trip.setEndDate(request.getEndDate());
@@ -219,6 +232,7 @@ public class TripService {
         return TripResponseDto.builder()
                 .id(entity.getId())
                 .destination(entity.getDestination())
+                .address(entity.getAddress())
                 .startDate(entity.getStartDate())
                 .startTime(entity.getStartTime())
                 .endDate(entity.getEndDate())

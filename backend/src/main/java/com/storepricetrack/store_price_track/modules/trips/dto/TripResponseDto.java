@@ -18,6 +18,7 @@ import java.util.List;
 public class TripResponseDto {
     private Long id;
     private String destination;
+    private String address;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;

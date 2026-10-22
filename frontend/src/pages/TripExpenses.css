@@ -1,0 +1,372 @@
+.trip-expenses-page {
+  padding-bottom: 40px;
+}
+
+.expenses-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.expenses-header h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  text-align: center;
+  flex: 1;
+}
+
+/* Card Chave Pix do Usuário */
+.pix-user-card {
+  background: white;
+  border-radius: var(--border-radius-md);
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+  border: 1px solid rgba(42, 157, 143, 0.2);
+}
+
+.pix-user-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.pix-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #2a9d8f;
+  font-size: 14px;
+}
+
+.btn-edit-pix {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #2a9d8f;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pix-key-display {
+  font-size: 14px;
+  color: var(--text-dark);
+  font-family: monospace;
+  background: #f7f9f9;
+  padding: 8px 12px;
+  border-radius: 8px;
+  word-break: break-all;
+}
+
+.pix-edit-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pix-edit-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #dcd7cb;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.pix-edit-input:focus {
+  border-color: #2a9d8f;
+}
+
+.btn-save-pix {
+  background: #2a9d8f;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-cancel-pix {
+  background: #f0ede6;
+  color: #666;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* Botão Flutuante / Topo Novo Gasto */
+.btn-new-expense {
+  width: 100%;
+  padding: 14px;
+  background: #e07a5f;
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-pill);
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(224, 122, 95, 0.35);
+  margin-bottom: 24px;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.btn-new-expense:hover {
+  background: #d4684d;
+  transform: translateY(-1px);
+}
+
+.btn-new-expense:active {
+  transform: scale(0.98);
+}
+
+/* Seções */
+.expenses-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Cards de Dívidas / Cobranças */
+.debt-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.debt-card {
+  background: white;
+  border-radius: var(--border-radius-md);
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-left: 5px solid #e07a5f;
+}
+
+.debt-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.debt-creditor-name {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-dark);
+}
+
+.debt-amount-highlight {
+  font-size: 17px;
+  font-weight: 700;
+  color: #e07a5f;
+}
+
+/* Card Pix do Credor no Topo do Detalhe */
+.creditor-pix-box {
+  background: #fdf2e9;
+  border: 1px dashed #e07a5f;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.creditor-pix-label {
+  font-size: 12px;
+  color: #8c887b;
+  font-weight: 500;
+}
+
+.creditor-pix-value {
+  font-size: 13px;
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--text-dark);
+  word-break: break-all;
+}
+
+.btn-copy-pix {
+  background: white;
+  border: 1px solid #e07a5f;
+  color: #e07a5f;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+/* Tabela de Detalhes dos Gastos */
+.debt-details-table-wrapper {
+  margin-top: 14px;
+  border-top: 1px solid #f0ede6;
+  padding-top: 12px;
+}
+
+.debt-details-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.debt-details-table th {
+  text-align: left;
+  padding: 6px 0;
+  color: #8c887b;
+  font-weight: 600;
+  border-bottom: 1px solid #eee;
+}
+
+.debt-details-table td {
+  padding: 8px 0;
+  border-bottom: 1px solid #f9f9f9;
+}
+
+.debt-total-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+/* Modal Novo Gasto */
+.expense-modal-content {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 24px;
+  max-width: 480px;
+  width: 95%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modal-header-row h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* Seleção de Participantes do Rateio */
+.splits-selection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.splits-selection-header label {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.btn-select-all-friends {
+  background: none;
+  border: none;
+  color: #2a9d8f;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.friends-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #f0ede6;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.friend-check-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #fbf9f5;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.friend-check-card:hover {
+  background: #f0ece1;
+}
+
+.friend-check-card.selected {
+  background: #fdf2e9;
+  border: 1px solid #e07a5f;
+}
+
+.friend-check-card-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.friend-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #89b4b1;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.friend-name-check {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.split-preview-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e07a5f;
+  margin-top: 6px;
+  text-align: right;
+}

@@ -18,6 +18,7 @@ export const normalizeTripShoppingItem = (item) => {
     unitPrice: Number(item.unit_price ?? item.unitPrice ?? 0),
     category: item.category || 'Outros',
     isCustomPrice: item.is_custom_price ?? item.isCustomPrice ?? false,
+    checked: Boolean(item.checked),
     addedByUserId: item.added_by_user_id ?? item.addedByUserId,
     addedByName: item.added_by_name ?? item.addedByName
   };
@@ -44,7 +45,8 @@ export const addTripShoppingItem = async (tripId, itemData) => {
       unitPrice: itemData.unitPrice ?? itemData.price ?? 0,
       category: itemData.category || 'Outros',
       is_custom_price: itemData.isCustomPrice ?? true,
-      isCustomPrice: itemData.isCustomPrice ?? true
+      isCustomPrice: itemData.isCustomPrice ?? true,
+      checked: Boolean(itemData.checked)
     }),
     ...fetchOptions
   });
@@ -64,7 +66,8 @@ export const updateTripShoppingItem = async (tripId, itemId, itemData) => {
       unitPrice: itemData.unitPrice,
       category: itemData.category,
       is_custom_price: itemData.isCustomPrice,
-      isCustomPrice: itemData.isCustomPrice
+      isCustomPrice: itemData.isCustomPrice,
+      checked: itemData.checked !== undefined ? Boolean(itemData.checked) : undefined
     }),
     ...fetchOptions
   });

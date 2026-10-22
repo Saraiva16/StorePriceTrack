@@ -46,6 +46,10 @@ public class TripShoppingItemEntity {
     @Column(name = "is_custom_price")
     private Boolean isCustomPrice = false;
 
+    @Builder.Default
+    @Column(name = "checked")
+    private Boolean checked = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "added_by_user_id")
     private User addedBy;

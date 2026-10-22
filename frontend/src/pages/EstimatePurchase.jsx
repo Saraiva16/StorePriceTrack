@@ -346,7 +346,8 @@ export default function EstimatePurchase() {
         quantity: updatedItem.qty,
         unitPrice: updatedItem.unitPrice,
         category: updatedItem.category,
-        isCustomPrice: updatedItem.isCustomPrice
+        isCustomPrice: updatedItem.isCustomPrice,
+        checked: updatedItem.checked
       }).catch(err => console.error("Erro ao atualizar item da viagem no backend:", err));
     }
   };
@@ -364,6 +365,7 @@ export default function EstimatePurchase() {
               unitPrice: Number(ti.unitPrice) || 0,
               category: ti.category || 'Outros',
               isCustomPrice: ti.isCustomPrice ?? true,
+              checked: Boolean(ti.checked),
               addedByName: ti.addedByName
             }));
             setItems(mapped);
@@ -403,8 +405,50 @@ export default function EstimatePurchase() {
     }
   }, [items, tripId]);
 
+  const [tripCheckoutSummary, setTripCheckoutSummary] = useState(null);
+
   const handleCloseCart = async () => {
+    if (items.length === 0) return;
     setProcessingCart(true);
+
+    // FLUXO A: LISTA DE COMPRAS DA VIAGEM
+    if (tripId) {
+      try {
+        // 1. Marca todos os itens como comprados/conferidos (checked = true)
+        const updatedItems = items.map(it => ({ ...it, checked: true }));
+        setItems(updatedItems);
+
+        // Atualiza no backend em paralelo
+        await Promise.all(
+          items.map(it => 
+            updateTripShoppingItem(tripId, it.id, {
+              name: it.name,
+              quantity: it.qty,
+              unitPrice: it.unitPrice,
+              category: it.category,
+              isCustomPrice: it.isCustomPrice,
+              checked: true
+            }).catch(e => console.warn("Erro ao marcar item no fechamento:", e))
+          )
+        );
+
+        setCartClosed(true);
+        // Prepara resumo para rateio
+        setTripCheckoutSummary({
+          total: totalGeral,
+          itemCount: items.length,
+          date: date || todayISO
+        });
+      } catch (error) {
+        console.error("Falha ao fechar lista da viagem", error);
+        alert("Erro ao fechar a lista da viagem.");
+      } finally {
+        setProcessingCart(false);
+      }
+      return;
+    }
+
+    // FLUXO B: ESTIMATIVA PESSOAL (PREVISÃO DE COMPRA DOMÉSTICA)
     try {
       // Match items with real product IDs
       for (const item of items) {
@@ -417,7 +461,6 @@ export default function EstimatePurchase() {
       const closedCartData = await closeCart();
       if (closedCartData) {
         setCartId(closedCartData.id);
-        // Accommodate SNAKE_CASE naming strategy from backend
         const bestDateRaw = closedCartData.suggestedBestDate || closedCartData.suggested_best_date;
         if (bestDateRaw) {
           const dateObj = new Date(bestDateRaw);
@@ -568,8 +611,8 @@ export default function EstimatePurchase() {
           No <strong>{formattedDate}</strong> você gastará <strong>R$ {totalGeral.toFixed(2).replace('.', ',')}</strong> no <strong>{market}</strong>
         </div>
 
-        {/* CENA 1 - BEST DATE CARD */}
-        {cartClosed && suggestedDate && (
+        {/* CENA 1 - BEST DATE CARD (PESSOAL) */}
+        {!tripId && cartClosed && suggestedDate && (
           <div className="best-date-card slide-down" style={{ marginTop: '1rem', marginBottom: '0' }}>
               <div className="best-date-icon-wrapper" style={{ padding: '0.6rem' }}>
                   <Search size={20} color="#fff" />
@@ -584,6 +627,27 @@ export default function EstimatePurchase() {
                       </span>
                     )}
                   </p>
+              </div>
+          </div>
+        )}
+
+        {/* CENA 2 - CHECKOUT DA VIAGEM: ATALHO PARA DIVIDIR GASTOS */}
+        {tripId && cartClosed && (
+          <div className="best-date-card slide-down" style={{ marginTop: '1rem', marginBottom: '0', background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%)', color: 'white' }}>
+              <div className="best-date-icon-wrapper" style={{ padding: '0.6rem', background: 'rgba(255,255,255,0.2)' }}>
+                  <CheckCircle size={22} color="#fff" />
+              </div>
+              <div className="best-date-info" style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: '1.05rem', marginBottom: '4px', color: 'white' }}>Lista de Compras Finalizada!</h3>
+                  <p style={{ fontSize: '0.88rem', color: '#e0f2f1' }}>
+                    Todos os itens foram marcados como concluídos. Total estimado: <strong>R$ {totalGeral.toFixed(2).replace('.', ',')}</strong>.
+                  </p>
+                  <button 
+                    onClick={() => navigate(`/trips/${tripId}/expenses`, { state: { prefillDescription: `Mercado (${market || 'Compras da Viagem'})`, prefillAmount: totalGeral } })}
+                    style={{ marginTop: '10px', padding: '10px 16px', background: '#e07a5f', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                  >
+                    <span>💸 Lançar no Dividir Gastos</span>
+                  </button>
               </div>
           </div>
         )}
