@@ -123,7 +123,45 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: #8c887b;
+  margin: 0;
+}
+
+/* Header da seção com toggle */
+.trips-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 8px;
+}
+
+.show-completed-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6c757d;
+  cursor: pointer;
+  user-select: none;
+  background: #fdfbf7;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #e8e2d8;
+  transition: all 0.2s ease;
+}
+
+.show-completed-toggle:hover {
+  background: #f7f3ec;
+  color: var(--text-dark);
+}
+
+.show-completed-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #2a9d8f;
 }
 
 .trip-card {
@@ -149,10 +187,61 @@
   border-left: 5px solid #2a9d8f;
 }
 
+.trip-card.trip-hidden {
+  opacity: 0.72;
+  border-style: dashed;
+}
+
+.trip-card.trip-completed-card {
+  opacity: 0.85;
+}
+
 .trip-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 12px;
+}
+
+.trip-card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.trip-header-icon-btn {
+  background: #f4f1eb;
+  border: none;
+  color: #8c887b;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.trip-header-icon-btn:hover {
+  background: #e9e4da;
+  color: var(--text-dark);
+}
+
+.trip-header-icon-btn.active {
+  background: #e8f5f3;
+  color: #2a9d8f;
+}
+
+.trip-header-icon-btn.danger {
+  color: #c53030;
+  background: #fde8e8;
+}
+
+.trip-header-icon-btn.danger:hover {
+  background: #fbd5d5;
+  color: #9b2c2c;
 }
 
 .trip-destination-group {
@@ -193,6 +282,40 @@
 .trip-status-badge.completed {
   background-color: #edf2f4;
   color: #8d99ae;
+}
+
+.trip-status-badge.hidden {
+  background-color: #e2e8f0;
+  color: #64748b;
+}
+
+/* Banner de viagens vazias filtradas */
+.empty-trips-banner {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 28px 20px;
+  text-align: center;
+  border: 1px dashed #dcd7ce;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-trips-banner p {
+  color: #8c887b;
+  font-size: 14px;
+  margin: 0;
+}
+
+.btn-show-completed-inline {
+  background: none;
+  border: none;
+  color: #2a9d8f;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 .trip-card-body {

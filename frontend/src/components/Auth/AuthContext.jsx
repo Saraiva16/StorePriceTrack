@@ -49,8 +49,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updatePixKey = (newPixKey) => {
+    setUser(prev => prev ? { ...prev, pixKey: newPixKey } : prev);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updatePixKey }}>
       {children}
     </AuthContext.Provider>
   );

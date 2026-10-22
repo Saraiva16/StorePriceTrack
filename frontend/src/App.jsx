@@ -12,6 +12,7 @@ import TripList from './pages/TripList';
 import TripDetails from './pages/TripDetails';
 import TripExpenses from './pages/TripExpenses';
 import UsersManagement from './pages/UsersManagement';
+import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import BottomNav from './components/BottomNav/BottomNav';
@@ -79,6 +80,11 @@ function AppContent() {
         <Route path="/users" element={
           <ProtectedRoute>
             <UsersManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         } />
       </Routes>

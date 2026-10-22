@@ -36,6 +36,7 @@ public class AuthService {
         return UserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
+                .pixKey(user.getPixKey())
                 .build();
     }
 

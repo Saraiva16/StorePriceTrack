@@ -1,5 +1,6 @@
 package com.storepricetrack.store_price_track.modules.trips.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -19,8 +20,10 @@ public record TripExpenseRequestDTO(
 
         @NotNull(message = "A data do gasto é obrigatória")
         @JsonFormat(pattern = "yyyy-MM-dd")
+        @JsonAlias({"expenseDate", "expense_date"})
         LocalDate expenseDate,
 
         @NotEmpty(message = "Selecione pelo menos uma pessoa para arcar com o rateio")
+        @JsonAlias({"participantUserIds", "participant_user_ids"})
         List<Long> participantUserIds
 ) {}

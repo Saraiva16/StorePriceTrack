@@ -67,43 +67,67 @@
 
 .pix-edit-form {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .pix-edit-input {
-  flex: 1;
-  padding: 8px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
   border: 1px solid #dcd7cb;
   border-radius: 8px;
   font-size: 14px;
   outline: none;
+  background: #fbfbf9;
+  transition: all 0.2s ease;
 }
 
 .pix-edit-input:focus {
   border-color: #2a9d8f;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.15);
+}
+
+.pix-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .btn-save-pix {
   background: #2a9d8f;
   color: white;
   border: none;
-  padding: 8px 14px;
+  padding: 8px 18px;
   border-radius: 8px;
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-save-pix:hover {
+  background: #21867a;
+  transform: translateY(-1px);
 }
 
 .btn-cancel-pix {
   background: #f0ede6;
   color: #666;
   border: none;
-  padding: 8px 12px;
+  padding: 8px 14px;
   border-radius: 8px;
   font-weight: 500;
   font-size: 13px;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel-pix:hover {
+  background: #e4dfd5;
 }
 
 /* Botão Flutuante / Topo Novo Gasto */
@@ -259,15 +283,39 @@
   color: var(--text-dark);
 }
 
+/* Modal Portal Overlay (Anexado a document.body) */
+.modal-portal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 999999 !important;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  touch-action: none;
+  overscroll-behavior: contain;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-portal-overlay.centered-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
 /* Modal Novo Gasto */
 .expense-modal-content {
   background: white;
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--border-radius-lg, 16px);
   padding: 24px;
   max-width: 480px;
-  width: 95%;
-  max-height: 85vh;
+  width: 100%;
+  max-height: 85dvh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
 }
 
 .modal-header-row {
@@ -311,8 +359,11 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 220px;
+  max-height: 200px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   border: 1px solid #f0ede6;
   border-radius: 8px;
   padding: 8px;

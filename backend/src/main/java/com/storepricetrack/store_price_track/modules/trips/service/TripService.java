@@ -103,6 +103,39 @@ public class TripService {
             }
         }
 
+        // Auto-cura: garante que participantes na viagem possuam associação com User caso user_id esteja nulo
+        if (trip.getParticipants().isEmpty() && trip.getCreatedBy() != null) {
+            TripParticipantEntity organizer = TripParticipantEntity.builder()
+                    .trip(trip)
+                    .user(trip.getCreatedBy())
+                    .name(trip.getCreatedBy().getUsername())
+                    .role(TripParticipantRole.ORGANIZER)
+                    .status(TripParticipantStatus.ACCEPTED)
+                    .balance(BigDecimal.ZERO)
+                    .build();
+            trip.getParticipants().add(organizer);
+            trip = tripRepository.save(trip);
+        } else {
+            boolean needsSave = false;
+            for (TripParticipantEntity p : trip.getParticipants()) {
+                if (p.getUser() == null) {
+                    if (p.getRole() == TripParticipantRole.ORGANIZER && trip.getCreatedBy() != null) {
+                        p.setUser(trip.getCreatedBy());
+                        needsSave = true;
+                    } else if (p.getName() != null) {
+                        var foundUser = userRepository.findByUsername(p.getName());
+                        if (foundUser.isPresent()) {
+                            p.setUser(foundUser.get());
+                            needsSave = true;
+                        }
+                    }
+                }
+            }
+            if (needsSave) {
+                trip = tripRepository.save(trip);
+            }
+        }
+
         return toResponseDto(trip);
     }
 
@@ -218,16 +251,35 @@ public class TripService {
 
     private TripResponseDto toResponseDto(TripEntity entity) {
         List<TripParticipantDto> participantDtos = entity.getParticipants().stream()
-                .map(p -> TripParticipantDto.builder()
-                        .id(p.getId())
-                        .userId(p.getUser() != null ? p.getUser().getId() : null)
-                        .name(p.getName())
-                        .role(p.getRole().name().equalsIgnoreCase("ORGANIZER") ? "Organizador" : "Amigo")
-                        .status(p.getStatus().name().equalsIgnoreCase("ACCEPTED") ? "accepted" : "pending")
-                        .balance(p.getBalance() != null ? p.getBalance() : BigDecimal.ZERO)
-                        .joinedAt(p.getJoinedAt())
-                        .build())
+                .map(p -> {
+                    Long userId = p.getUser() != null ? p.getUser().getId() : null;
+                    if (userId == null && p.getRole() == TripParticipantRole.ORGANIZER && entity.getCreatedBy() != null) {
+                        userId = entity.getCreatedBy().getId();
+                    }
+                    return TripParticipantDto.builder()
+                            .id(p.getId())
+                            .userId(userId)
+                            .name(p.getName())
+                            .role(p.getRole().name().equalsIgnoreCase("ORGANIZER") ? "Organizador" : "Amigo")
+                            .status(p.getStatus().name().equalsIgnoreCase("ACCEPTED") ? "accepted" : "pending")
+                            .balance(p.getBalance() != null ? p.getBalance() : BigDecimal.ZERO)
+                            .joinedAt(p.getJoinedAt())
+                            .build();
+                })
                 .collect(Collectors.toList());
+
+        // Se por algum motivo a lista de participantes estiver vazia mas houver criador
+        if (participantDtos.isEmpty() && entity.getCreatedBy() != null) {
+            participantDtos.add(TripParticipantDto.builder()
+                    .id(entity.getCreatedBy().getId())
+                    .userId(entity.getCreatedBy().getId())
+                    .name(entity.getCreatedBy().getUsername())
+                    .role("Organizador")
+                    .status("accepted")
+                    .balance(BigDecimal.ZERO)
+                    .joinedAt(entity.getCreatedAt())
+                    .build());
+        }
 
         return TripResponseDto.builder()
                 .id(entity.getId())
