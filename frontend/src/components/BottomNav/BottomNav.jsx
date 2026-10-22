@@ -19,7 +19,11 @@ export default function BottomNav() {
           </div>
         </button>
         
-        <button className="nav-item">
+        <button 
+          className="nav-item" 
+          onClick={() => navigate('/profile')}
+          aria-label="Meu Perfil"
+        >
           <User size={28} color="var(--icon-color)" />
         </button>
       </div>

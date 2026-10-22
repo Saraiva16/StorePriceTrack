@@ -6,6 +6,9 @@ import com.storepricetrack.store_price_track.modules.trips.dto.*;
 import com.storepricetrack.store_price_track.modules.trips.entity.TripEntity;
 import com.storepricetrack.store_price_track.modules.trips.entity.TripExpenseEntity;
 import com.storepricetrack.store_price_track.modules.trips.entity.TripExpenseSplitEntity;
+import com.storepricetrack.store_price_track.modules.trips.entity.TripParticipantEntity;
+import com.storepricetrack.store_price_track.modules.trips.entity.TripParticipantRole;
+import com.storepricetrack.store_price_track.modules.trips.entity.TripParticipantStatus;
 import com.storepricetrack.store_price_track.modules.trips.repository.TripExpenseRepository;
 import com.storepricetrack.store_price_track.modules.trips.repository.TripExpenseSplitRepository;
 import com.storepricetrack.store_price_track.modules.trips.repository.TripRepository;
@@ -45,10 +48,48 @@ public class TripExpenseService {
             throw new IllegalArgumentException("Selecione pelo menos um amigo para dividir a despesa.");
         }
 
-        // Recupera usuários que farão o rateio
-        List<User> participants = userRepository.findAllById(request.participantUserIds());
+        // Filtra possíveis IDs nulos para segurança estrita
+        List<Long> cleanUserIds = request.participantUserIds().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        if (cleanUserIds.isEmpty()) {
+            throw new IllegalArgumentException("Selecione pelo menos um participante válido para a despesa.");
+        }
+
+        // Recupera usuários que farão o rateio (suporta rateio solo com 1 usuário ou coletivo)
+        List<User> participants = userRepository.findAllById(cleanUserIds);
         if (participants.isEmpty()) {
-            throw new IllegalArgumentException("Nenhum participante válido foi encontrado para o rateio.");
+            throw new IllegalArgumentException("Nenhum participante válido foi encontrado no sistema para o rateio.");
+        }
+
+        // Garante que o pagador seja uma entidade gerenciada no EntityManager atual
+        User payer = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Usuário pagador não encontrado."));
+
+        // Garante que todos os usuários selecionados estejam registrados como participantes da viagem
+        boolean tripModified = false;
+        for (User p : participants) {
+            boolean alreadyParticipant = trip.getParticipants().stream()
+                    .anyMatch(tp -> tp.getUser() != null && Objects.equals(tp.getUser().getId(), p.getId()));
+            if (!alreadyParticipant) {
+                TripParticipantEntity newParticipant = TripParticipantEntity.builder()
+                        .trip(trip)
+                        .user(p)
+                        .name(p.getUsername())
+                        .role(TripParticipantRole.GUEST)
+                        .status(TripParticipantStatus.ACCEPTED)
+                        .balance(BigDecimal.ZERO)
+                        .build();
+                if (trip.getParticipants().size() >= trip.getPeopleCount()) {
+                    trip.setPeopleCount(trip.getParticipants().size() + 1);
+                }
+                trip.getParticipants().add(newParticipant);
+                tripModified = true;
+            }
+        }
+        if (tripModified) {
+            trip = tripRepository.save(trip);
         }
 
         BigDecimal totalAmount = request.amount().setScale(2, RoundingMode.HALF_UP);
@@ -58,7 +99,7 @@ public class TripExpenseService {
 
         TripExpenseEntity expense = TripExpenseEntity.builder()
                 .trip(trip)
-                .paidBy(currentUser)
+                .paidBy(payer)
                 .description(request.description().trim())
                 .amount(totalAmount)
                 .expenseDate(request.expenseDate())

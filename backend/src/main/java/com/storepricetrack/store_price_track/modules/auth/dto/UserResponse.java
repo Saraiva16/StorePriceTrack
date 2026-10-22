@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class UserResponse {
     private Long id;
     private String username;
+    private String pixKey;
 }

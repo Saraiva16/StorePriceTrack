@@ -22,11 +22,31 @@ export const fetchTripExpenses = async (tripId) => {
   return await res.json();
 };
 
+export const fetchAllUsers = async () => {
+  try {
+    const res = await fetch('/api/users', {
+      headers: getHeaders(),
+      ...fetchOptions
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (e) {
+    console.warn('Erro ao carregar usuários do sistema:', e);
+    return [];
+  }
+};
+
 export const createTripExpense = async (tripId, expenseData) => {
+  const payload = {
+    ...expenseData,
+    expense_date: expenseData.expenseDate || expenseData.expense_date,
+    participant_user_ids: expenseData.participantUserIds || expenseData.participant_user_ids
+  };
+
   const res = await fetch(`${API_BASE}/${tripId}/expenses`, {
     method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify(expenseData),
+    body: JSON.stringify(payload),
     ...fetchOptions
   });
   if (!res.ok) {
@@ -55,13 +75,46 @@ export const deleteTripExpense = async (tripId, expenseId) => {
   return true;
 };
 
-export const updateUserPixKey = async (tripId, pixKey) => {
-  const res = await fetch(`${API_BASE}/${tripId}/expenses/pix`, {
-    method: 'PUT',
+export const updateUserPixKey = async (arg1, arg2) => {
+  // Suporta tanto updateUserPixKey(pixKey) quanto updateUserPixKey(tripId, pixKey)
+  const pixKey = arg2 !== undefined ? arg2 : arg1;
+  const tripId = arg2 !== undefined ? arg1 : null;
+
+  try {
+    const res = await fetch('/api/users/pix', {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ pixKey }),
+      ...fetchOptions
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Erro ao atualizar chave pix em /api/users/pix, tentando fallback:', err);
+  }
+
+  // Fallback para rota de viagem se fornecido tripId
+  if (tripId) {
+    const fallbackRes = await fetch(`${API_BASE}/${tripId}/expenses/pix`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ pixKey }),
+      ...fetchOptions
+    });
+    if (!fallbackRes.ok) throw new Error('Falha ao atualizar chave Pix.');
+    return await fallbackRes.json();
+  }
+
+  throw new Error('Falha ao atualizar chave Pix do usuário.');
+};
+
+export const fetchUserPixKey = async () => {
+  const res = await fetch('/api/users/pix', {
+    method: 'GET',
     headers: getHeaders(),
-    body: JSON.stringify({ pixKey }),
     ...fetchOptions
   });
-  if (!res.ok) throw new Error('Falha ao atualizar chave Pix.');
+  if (!res.ok) throw new Error('Falha ao carregar chave Pix do usuário.');
   return await res.json();
 };

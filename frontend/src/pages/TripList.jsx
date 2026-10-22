@@ -9,10 +9,13 @@ import {
   MapPin, 
   ChevronRight, 
   X,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../components/Auth/AuthContext';
-import { getTrips, createTrip, validateTripData } from '../services/TripService';
+import { getTrips, createTrip, validateTripData, deleteTrip } from '../services/TripService';
 import './TripList.css';
 
 export default function TripList() {
@@ -25,6 +28,20 @@ export default function TripList() {
   const [trips, setTrips] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formErrors, setFormErrors] = useState({});
+
+  // Controle de exibição de viagens concluídas e ocultadas
+  const [showCompleted, setShowCompleted] = useState(() => {
+    return localStorage.getItem(`showCompletedTrips_${userId}`) === 'true';
+  });
+
+  const [hiddenTripIds, setHiddenTripIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`hiddenTrips_${userId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Form State
   const [formData, setFormData] = useState({
@@ -45,6 +62,38 @@ export default function TripList() {
   useEffect(() => {
     loadTrips();
   }, [userId]);
+
+  const handleToggleShowCompleted = (e) => {
+    const nextVal = e.target.checked;
+    setShowCompleted(nextVal);
+    localStorage.setItem(`showCompletedTrips_${userId}`, String(nextVal));
+  };
+
+  const handleToggleHideTrip = (e, tripId) => {
+    e.stopPropagation();
+    setHiddenTripIds(prev => {
+      const next = prev.includes(tripId)
+        ? prev.filter(id => id !== tripId)
+        : [...prev, tripId];
+      localStorage.setItem(`hiddenTrips_${userId}`, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const handleDeleteTrip = async (e, trip) => {
+    e.stopPropagation();
+    const confirmed = window.confirm(
+      `Deseja realmente excluir permanentemente a viagem para "${trip.destination}"? Esta ação removerá todos os dados, participantes e rateios do evento.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteTrip(trip.id);
+      setTrips(prev => prev.filter(t => t.id !== trip.id));
+    } catch (err) {
+      alert(err.message || 'Erro ao excluir viagem.');
+    }
+  };
 
   const handleOpenModal = () => {
     setFormData({
@@ -147,6 +196,16 @@ export default function TripList() {
     return `${day}/${month}/${year}`;
   };
 
+  const visibleTrips = trips.filter(trip => {
+    const isCompleted = trip.status === 'completed';
+    const isHidden = hiddenTripIds.includes(trip.id);
+
+    if (showCompleted) {
+      return true;
+    }
+    return !isCompleted && !isHidden;
+  });
+
   return (
     <div className="page-container trips-page animate-slide-up">
       {/* Header */}
@@ -177,47 +236,107 @@ export default function TripList() {
         </div>
       ) : (
         <div className="trips-section">
-          <span className="section-label">Suas Viagens ({trips.length})</span>
-          
-          {trips.map(trip => {
-            const isActive = trip.status === 'active';
-            return (
-              <div 
-                key={trip.id} 
-                className={`trip-card ${isActive ? 'active-trip' : ''}`}
-                onClick={() => navigate(`/trips/${trip.id}`)}
-              >
-                <div className="trip-card-header">
-                  <div className="trip-destination-group">
-                    <span className="trip-destination-icon">✈️</span>
-                    <span className="trip-destination-name">{trip.destination}</span>
-                  </div>
-                  <span className={`trip-status-badge ${trip.status}`}>
-                    {isActive ? '● Ativa' : trip.status === 'scheduled' ? 'Agendada' : 'Concluída'}
-                  </span>
-                </div>
+          <div className="trips-section-header">
+            <span className="section-label">Suas Viagens ({visibleTrips.length})</span>
+            <label className="show-completed-toggle" title="Mostrar viagens que já terminaram ou foram ocultadas">
+              <input 
+                type="checkbox"
+                checked={showCompleted}
+                onChange={handleToggleShowCompleted}
+              />
+              <span>Mostrar viagens já concluídas</span>
+            </label>
+          </div>
 
-                <div className="trip-card-body">
-                  <div className="trip-info-row">
-                    <Calendar size={15} color="#e07a5f" />
-                    <span>
-                      {formatDateDisplay(trip.startDate)} ({trip.startTime}) até {formatDateDisplay(trip.endDate)} ({trip.endTime})
-                    </span>
+          {visibleTrips.length === 0 ? (
+            <div className="empty-trips-banner animate-slide-up">
+              <p>Nenhuma viagem ativa ou agendada visível no momento.</p>
+              {!showCompleted && (
+                <button 
+                  type="button" 
+                  className="btn-show-completed-inline"
+                  onClick={() => {
+                    setShowCompleted(true);
+                    localStorage.setItem(`showCompletedTrips_${userId}`, 'true');
+                  }}
+                >
+                  Exibir viagens já concluídas / ocultadas
+                </button>
+              )}
+            </div>
+          ) : (
+            visibleTrips.map(trip => {
+              const isActive = trip.status === 'active';
+              const isCompleted = trip.status === 'completed';
+              const isHidden = hiddenTripIds.includes(trip.id);
+              const isOrganizer = trip.createdByUserId === user?.id || 
+                (trip.participants || []).some(p => p.userId === user?.id && (p.role === 'ORGANIZER' || p.role === 'Organizador'));
+
+              return (
+                <div 
+                  key={trip.id} 
+                  className={`trip-card ${isActive ? 'active-trip' : ''} ${isHidden ? 'trip-hidden' : ''} ${isCompleted ? 'trip-completed-card' : ''}`}
+                  onClick={() => navigate(`/trips/${trip.id}`)}
+                >
+                  <div className="trip-card-header">
+                    <div className="trip-destination-group">
+                      <span className="trip-destination-icon">✈️</span>
+                      <span className="trip-destination-name">{trip.destination}</span>
+                    </div>
+
+                    <div className="trip-card-header-actions" onClick={e => e.stopPropagation()}>
+                      <span className={`trip-status-badge ${isHidden ? 'hidden' : trip.status}`}>
+                        {isHidden ? 'Oculta' : isActive ? '● Ativa' : isCompleted ? 'Concluída' : 'Agendada'}
+                      </span>
+
+                      {/* Botão de Ocultar / Reexibir */}
+                      <button 
+                        type="button" 
+                        className={`trip-header-icon-btn ${isHidden ? 'active' : ''}`}
+                        onClick={(e) => handleToggleHideTrip(e, trip.id)}
+                        title={isHidden ? "Reexibir viagem na lista principal" : "Ocultar viagem da lista"}
+                        aria-label={isHidden ? "Reexibir viagem" : "Ocultar viagem"}
+                      >
+                        {isHidden ? <Eye size={17} /> : <EyeOff size={17} />}
+                      </button>
+
+                      {/* Botão de Excluir */}
+                      {isOrganizer && (
+                        <button 
+                          type="button" 
+                          className="trip-header-icon-btn danger" 
+                          onClick={(e) => handleDeleteTrip(e, trip)}
+                          title="Excluir viagem definitivamente"
+                          aria-label="Excluir viagem"
+                        >
+                          <Trash2 size={17} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="trip-info-row">
-                    <Users size={15} color="#89b4b1" />
-                    <span>{trip.peopleCount} {trip.peopleCount === 1 ? 'pessoa' : 'pessoas'} participando</span>
+                  <div className="trip-card-body">
+                    <div className="trip-info-row">
+                      <Calendar size={15} color="#e07a5f" />
+                      <span>
+                        {formatDateDisplay(trip.startDate)} ({trip.startTime}) até {formatDateDisplay(trip.endDate)} ({trip.endTime})
+                      </span>
+                    </div>
+
+                    <div className="trip-info-row">
+                      <Users size={15} color="#89b4b1" />
+                      <span>{trip.peopleCount} {trip.peopleCount === 1 ? 'pessoa' : 'pessoas'} participando</span>
+                    </div>
+                  </div>
+
+                  <div className="trip-card-footer">
+                    <span className="trip-action-hint">Acessar lista e gastos</span>
+                    <ChevronRight size={18} color="#e07a5f" />
                   </div>
                 </div>
-
-                <div className="trip-card-footer">
-                  <span className="trip-action-hint">Acessar lista e gastos</span>
-                  <ChevronRight size={18} color="#e07a5f" />
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
 
           {/* Botão tracejado secundário para permitir criar novas viagens mesmo já tendo algumas */}
           <button className="dashed-btn-add" onClick={handleOpenModal}>

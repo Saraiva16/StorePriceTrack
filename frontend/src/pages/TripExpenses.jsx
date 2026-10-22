@@ -24,15 +24,17 @@ import {
   createTripExpense, 
   fetchTripDebts, 
   deleteTripExpense, 
-  updateUserPixKey 
+  updateUserPixKey,
+  fetchUserPixKey
 } from '../services/TripExpenseService';
+import { maskCurrencyInput, parseCurrencyToNumber, formatCurrency } from '../utils/currency';
 import './TripExpenses.css';
 
 export default function TripExpenses() {
   const { tripId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, updatePixKey } = useAuth();
   const currentUserId = user?.id;
 
   const [trip, setTrip] = useState(null);
@@ -42,9 +44,15 @@ export default function TripExpenses() {
   const [toastMessage, setToastMessage] = useState('');
 
   // PIX State
-  const [pixKey, setPixKey] = useState('');
+  const [pixKey, setPixKey] = useState(user?.pixKey || '');
   const [isEditingPix, setIsEditingPix] = useState(false);
   const [newPixInput, setNewPixInput] = useState('');
+
+  useEffect(() => {
+    if (user?.pixKey) {
+      setPixKey(user.pixKey);
+    }
+  }, [user?.pixKey]);
 
   // Expand/Collapse debts
   const [expandedDebts, setExpandedDebts] = useState({});
@@ -53,7 +61,7 @@ export default function TripExpenses() {
   const prefill = location.state;
   const [isModalOpen, setIsModalOpen] = useState(Boolean(prefill?.prefillDescription));
   const [description, setDescription] = useState(prefill?.prefillDescription || '');
-  const [amount, setAmount] = useState(prefill?.prefillAmount ? Number(prefill.prefillAmount).toFixed(2).replace('.', ',') : '');
+  const [amount, setAmount] = useState(prefill?.prefillAmount ? formatCurrency(prefill.prefillAmount) : '');
   const todayStr = new Date().toISOString().split('T')[0];
   const [expenseDate, setExpenseDate] = useState(todayStr);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
@@ -63,6 +71,21 @@ export default function TripExpenses() {
   useEffect(() => {
     loadAllData();
   }, [tripId]);
+
+  // Trava a rolagem da página de fundo (body) enquanto o modal estiver aberto (evita scroll chaining no mobile)
+  useEffect(() => {
+    if (isModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      const originalTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.touchAction = originalTouchAction;
+      };
+    }
+  }, [isModalOpen]);
 
   const loadAllData = async () => {
     setIsLoading(true);
@@ -83,10 +106,15 @@ export default function TripExpenses() {
         setSelectedUserIds(validIds);
       }
 
-      // Descobre chave pix atual do usuário logado se presente nos dados
-      const currentUserExpense = expensesData.find(e => e.paidByUserId === currentUserId);
-      if (currentUserExpense?.paidByPixKey) {
-        setPixKey(currentUserExpense.paidByPixKey);
+      // Busca a chave Pix do usuário logado (independente de viagem)
+      try {
+        const pixRes = await fetchUserPixKey();
+        if (pixRes?.pixKey) {
+          setPixKey(pixRes.pixKey);
+          if (updatePixKey) updatePixKey(pixRes.pixKey);
+        }
+      } catch (err) {
+        console.warn('Não foi possível carregar a chave Pix do usuário:', err);
       }
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
@@ -102,8 +130,10 @@ export default function TripExpenses() {
 
   const handleSavePix = async () => {
     try {
-      const res = await updateUserPixKey(tripId, newPixInput);
-      setPixKey(res.pixKey || newPixInput);
+      const res = await updateUserPixKey(newPixInput);
+      const savedKey = res?.pixKey || newPixInput;
+      setPixKey(savedKey);
+      if (updatePixKey) updatePixKey(savedKey);
       setIsEditingPix(false);
       showToast('Chave Pix atualizada com sucesso!');
       await loadAllData();
@@ -112,15 +142,78 @@ export default function TripExpenses() {
     }
   };
 
+  // Participantes da viagem com identificador de usuário garantido e deduplicado (estritamente membros da viagem)
+  const validParticipants = (() => {
+    const raw = trip?.participants || [];
+    const list = [];
+    const seen = new Set();
+
+    // 1. Participantes já associados à viagem
+    for (const p of raw) {
+      let uid = p.userId;
+      if (!uid) {
+        if (p.role === 'Organizador' || p.role === 'ORGANIZER') {
+          uid = trip?.createdByUserId;
+        } else if (user?.username && p.name === user.username) {
+          uid = user?.id;
+        }
+      }
+      if (uid && !seen.has(uid)) {
+        seen.add(uid);
+        list.push({
+          ...p,
+          userId: uid,
+          name: p.name || (uid === currentUserId ? user?.username : 'Amigo')
+        });
+      }
+    }
+
+    // 2. Garante que o criador da viagem esteja na lista
+    if (trip?.createdByUserId && !seen.has(trip.createdByUserId)) {
+      seen.add(trip.createdByUserId);
+      list.unshift({
+        id: trip.createdByUserId,
+        userId: trip.createdByUserId,
+        name: trip.createdByUsername || 'Organizador',
+        role: 'Organizador',
+        status: 'accepted'
+      });
+    }
+
+    // 3. Garante que o usuário logado esteja presente se for participante
+    if (user?.id && !seen.has(user.id)) {
+      seen.add(user.id);
+      list.push({
+        id: user.id,
+        userId: user.id,
+        name: user.username || 'Você',
+        role: 'Amigo',
+        status: 'accepted'
+      });
+    }
+
+    return list;
+  })();
+
+  // Sincroniza participantes se veio prefill da lista de compras
+  useEffect(() => {
+    if (prefill?.prefillDescription && validParticipants.length > 0 && selectedUserIds.length === 0) {
+      setSelectedUserIds(validParticipants.map(p => p.userId));
+    }
+  }, [prefill, validParticipants.length]);
+
+  const handleAmountChange = (e) => {
+    const masked = maskCurrencyInput(e.target.value);
+    setAmount(masked);
+  };
+
   const handleOpenModal = () => {
     setDescription('');
     setAmount('');
     setExpenseDate(todayStr);
-    // Por padrão seleciona todos os participantes que aceitaram ou estão na viagem
-    const validUserIds = (trip?.participants || [])
-      .map(p => p.userId)
-      .filter(id => id != null);
-    setSelectedUserIds(validUserIds);
+    // Por padrão seleciona todos os participantes da viagem
+    const allIds = validParticipants.map(p => p.userId);
+    setSelectedUserIds(allIds);
     setFormError('');
     setIsModalOpen(true);
   };
@@ -136,9 +229,7 @@ export default function TripExpenses() {
   };
 
   const handleSelectAllUsers = () => {
-    const allIds = (trip?.participants || [])
-      .map(p => p.userId)
-      .filter(id => id != null);
+    const allIds = validParticipants.map(p => p.userId);
     if (selectedUserIds.length === allIds.length) {
       setSelectedUserIds([]);
     } else {
@@ -152,13 +243,13 @@ export default function TripExpenses() {
       setFormError('Informe a descrição do que foi gasto.');
       return;
     }
-    const cleanAmount = parseFloat(amount.replace(',', '.'));
-    if (isNaN(cleanAmount) || cleanAmount <= 0) {
+    const cleanAmount = parseCurrencyToNumber(amount);
+    if (cleanAmount <= 0) {
       setFormError('Informe um valor válido maior que zero.');
       return;
     }
     if (selectedUserIds.length === 0) {
-      setFormError('Selecione pelo menos um amigo para dividir o gasto.');
+      setFormError('Selecione pelo menos uma pessoa para arcar com o gasto (você ou amigos).');
       return;
     }
 
@@ -167,7 +258,9 @@ export default function TripExpenses() {
       await createTripExpense(tripId, {
         description: description.trim(),
         amount: cleanAmount,
+        expense_date: expenseDate,
         expenseDate,
+        participant_user_ids: selectedUserIds,
         participantUserIds: selectedUserIds
       });
       setIsModalOpen(false);
@@ -207,8 +300,6 @@ export default function TripExpenses() {
     }
   };
 
-  // Participantes da viagem com userId válido
-  const validParticipants = (trip?.participants || []).filter(p => p.userId != null);
 
   if (isLoading) {
     return (
@@ -218,8 +309,8 @@ export default function TripExpenses() {
     );
   }
 
-  const parsedAmount = parseFloat(amount.replace(',', '.')) || 0;
-  const splitPerPerson = selectedUserIds.length > 0 ? (parsedAmount / selectedUserIds.length).toFixed(2) : '0.00';
+  const parsedAmount = parseCurrencyToNumber(amount);
+  const splitPerPerson = selectedUserIds.length > 0 ? (parsedAmount / selectedUserIds.length).toFixed(2).replace('.', ',') : '0,00';
 
   return (
     <div className="page-container trip-expenses-page animate-slide-up">
@@ -262,9 +353,12 @@ export default function TripExpenses() {
               placeholder="CPF, E-mail, Celular ou Chave Aleatória..."
               value={newPixInput}
               onChange={e => setNewPixInput(e.target.value)}
+              autoFocus
             />
-            <button className="btn-save-pix" onClick={handleSavePix}>Salvar</button>
-            <button className="btn-cancel-pix" onClick={() => setIsEditingPix(false)}>Cancelar</button>
+            <div className="pix-edit-actions">
+              <button className="btn-cancel-pix" onClick={() => setIsEditingPix(false)}>Cancelar</button>
+              <button className="btn-save-pix" onClick={handleSavePix}>Salvar</button>
+            </div>
           </div>
         ) : (
           <div className="pix-key-display">
@@ -421,7 +515,11 @@ export default function TripExpenses() {
       {/* Modal / Portal Novo Gasto */}
       {isModalOpen && createPortal(
         <div className="modal-portal-overlay centered-mode" onClick={() => setIsModalOpen(false)}>
-          <div className="expense-modal-content animate-slide-up" onClick={e => e.stopPropagation()}>
+          <div 
+            className="expense-modal-content animate-slide-up" 
+            onClick={e => e.stopPropagation()}
+            onTouchMove={e => e.stopPropagation()}
+          >
             <div className="modal-header-row">
               <h2>Registrar Gasto</h2>
               <button className="header-btn" onClick={() => setIsModalOpen(false)}>
@@ -456,10 +554,12 @@ export default function TripExpenses() {
                   <label>Valor Total (R$)</label>
                   <input 
                     type="text" 
+                    inputMode="numeric"
                     className="input-field" 
                     placeholder="0,00"
                     value={amount}
-                    onChange={e => setAmount(e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    onChange={handleAmountChange}
                     required
                   />
                 </div>
@@ -490,7 +590,7 @@ export default function TripExpenses() {
                     const isSelected = selectedUserIds.includes(participant.userId);
                     return (
                       <div 
-                        key={participant.id} 
+                        key={participant.userId || participant.id} 
                         className={`friend-check-card ${isSelected ? 'selected' : ''}`}
                         onClick={() => handleToggleUser(participant.userId)}
                       >
@@ -515,13 +615,24 @@ export default function TripExpenses() {
 
                 {parsedAmount > 0 && selectedUserIds.length > 0 && (
                   <div className="split-preview-badge">
-                    Divisão: R$ {splitPerPerson} por pessoa ({selectedUserIds.length} selecionados)
+                    {selectedUserIds.length === 1 && selectedUserIds[0] === currentUserId
+                      ? `Controle solo: R$ ${formatCurrency(parsedAmount)} (100% individual)`
+                      : `Divisão: R$ ${splitPerPerson} por pessoa (${selectedUserIds.length} selecionados)`
+                    }
                   </div>
                 )}
               </div>
 
-              {/* Botões do Formulário */}
+              {/* Botões do Formulário (Ordem Invertida: Cancelar à esquerda, Salvar à direita) */}
               <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                <button 
+                  type="button" 
+                  className="btn-slot-back" 
+                  onClick={() => setIsModalOpen(false)}
+                  style={{ minWidth: '100px' }}
+                >
+                  Cancelar
+                </button>
                 <button 
                   type="submit" 
                   className="btn-new-expense" 
@@ -529,13 +640,6 @@ export default function TripExpenses() {
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Salvando...' : 'Salvar Gasto'}
-                </button>
-                <button 
-                  type="button" 
-                  className="btn-slot-back" 
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancelar
                 </button>
               </div>
             </form>

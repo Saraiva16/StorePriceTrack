@@ -399,21 +399,23 @@ export default function TripDetails() {
           <div className="destination-meta-left">
             <span className="destination-pin-icon">📍</span>
             <div className="destination-title-wrapper">
-              <div className="destination-name-text">{trip.destination}</div>
+              <div className="destination-name-row">
+                <span className="destination-name-text">{trip.destination}</span>
+                {isOrganizer && (
+                  <button 
+                    className="btn-inline-pencil" 
+                    onClick={handleOpenEditModal} 
+                    title="Editar informações da viagem"
+                    aria-label="Editar informações da viagem"
+                  >
+                    <Pencil size={14} color="#2a9d8f" />
+                  </button>
+                )}
+              </div>
               {trip.address && (
-                <div className="destination-address-text" style={{ fontSize: '13px', color: '#7d796e', marginTop: '2px', wordBreak: 'break-word' }}>
-                  📍 {trip.address}
+                <div className="destination-address-text">
+                  {trip.address}
                 </div>
-              )}
-              {isOrganizer && (
-                <button 
-                  className="btn-inline-pencil" 
-                  onClick={handleOpenEditModal} 
-                  title="Editar informações da viagem"
-                  aria-label="Editar informações da viagem"
-                >
-                  <Pencil size={14} color="#2a9d8f" />
-                </button>
               )}
             </div>
           </div>
