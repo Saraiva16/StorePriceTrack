@@ -24,7 +24,7 @@ import './Profile.css';
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { user, logout, updatePixKey } = useAuth();
+  const { user, logout, updatePixKey, updateUserData } = useAuth();
 
   // Estados dos Dados Cadastrais
   const [username, setUsername] = useState(user?.username || '');
@@ -80,7 +80,8 @@ export default function Profile() {
 
       setUsername(updated.username);
       setPixKey(updated.pixKey || '');
-      if (updatePixKey) updatePixKey(updated.pixKey || '');
+      if (updateUserData) updateUserData({ username: updated.username, pixKey: updated.pixKey || '' });
+      else if (updatePixKey) updatePixKey(updated.pixKey || '');
 
       setProfileSuccess('Dados cadastrais atualizados com sucesso!');
       setTimeout(() => setProfileSuccess(''), 3500);

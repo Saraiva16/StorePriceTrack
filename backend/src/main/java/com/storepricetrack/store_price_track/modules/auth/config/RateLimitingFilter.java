@@ -28,8 +28,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private Bucket newBucket(String ip) {
-        // Allows 5 requests per 15 minutes per IP
-        Bandwidth limit = Bandwidth.classic(5, Refill.intervally(5, Duration.ofMinutes(15)));
+        // Permite 10 tentativas a cada 15 minutos por IP (mais tolerante a erros de digitação e múltiplos dispositivos)
+        Bandwidth limit = Bandwidth.classic(10, Refill.intervally(10, Duration.ofMinutes(15)));
         return Bucket.builder()
                 .addLimit(limit)
                 .build();
@@ -51,7 +51,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
             } else {
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-                response.getWriter().write("Too many login attempts. Please try again later.");
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"message\": \"Muitas tentativas de login consecutivas. Por favor, aguarde alguns minutos e tente novamente.\"}");
                 return; // Stop filter chain
             }
         } else {
@@ -60,13 +61,20 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private String extractClientIp(HttpServletRequest request) {
-        String clientIp = request.getHeader("X-Forwarded-For");
-        if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
+        // Prioriza o cabeçalho original enviado pelo Cloudflare
+        String clientIp = request.getHeader("CF-Connecting-IP");
+        if (clientIp == null || clientIp.isBlank() || "unknown".equalsIgnoreCase(clientIp)) {
+            clientIp = request.getHeader("X-Forwarded-For");
+        }
+        if (clientIp == null || clientIp.isBlank() || "unknown".equalsIgnoreCase(clientIp)) {
+            clientIp = request.getHeader("X-Real-IP");
+        }
+        if (clientIp == null || clientIp.isBlank() || "unknown".equalsIgnoreCase(clientIp)) {
             clientIp = request.getRemoteAddr();
         }
         if (clientIp != null && clientIp.contains(",")) {
             clientIp = clientIp.split(",")[0].trim();
         }
-        return clientIp;
+        return clientIp != null ? clientIp.trim() : "unknown";
     }
 }

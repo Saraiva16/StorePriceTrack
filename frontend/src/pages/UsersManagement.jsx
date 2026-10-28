@@ -125,6 +125,7 @@ const UsersManagement = () => {
                     <input 
                       style={styles.input}
                       type="password"
+                      autoComplete="new-password"
                       value={editForm.password}
                       onChange={e => setEditForm({...editForm, password: e.target.value})}
                       placeholder="Nova senha (opcional)"

@@ -26,35 +26,63 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (username, password) => {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ username, password })
-    });
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
 
-    if (res.ok) {
-      // Fetch user data again after setting the cookie
-      const userRes = await fetch('/api/auth/me');
-      const userData = await userRes.json();
-      setUser(userData);
-      return true;
+      if (res.ok) {
+        const userRes = await fetch('/api/auth/me');
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setUser(userData);
+        }
+        return { success: true };
+      }
+
+      // Trata erros de rate limiting ou credenciais inválidas
+      let errorMessage = 'Usuário ou senha incorretos.';
+      if (res.status === 429) {
+        errorMessage = 'Muitas tentativas consecutivas de login. Por favor, aguarde alguns minutos e tente novamente.';
+      } else {
+        try {
+          const data = await res.json();
+          if (data && data.message) {
+            errorMessage = data.message;
+          }
+        } catch {
+          // Mantém mensagem padrão
+        }
+      }
+
+      return { success: false, error: errorMessage };
+    } catch {
+      return { success: false, error: 'Erro de conexão com o servidor. Verifique sua internet.' };
     }
-    return false;
   };
 
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    setUser(null);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } finally {
+      setUser(null);
+    }
   };
 
   const updatePixKey = (newPixKey) => {
     setUser(prev => prev ? { ...prev, pixKey: newPixKey } : prev);
   };
 
+  const updateUserData = (updatedFields) => {
+    setUser(prev => prev ? { ...prev, ...updatedFields } : prev);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, updatePixKey }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updatePixKey, updateUserData }}>
       {children}
     </AuthContext.Provider>
   );

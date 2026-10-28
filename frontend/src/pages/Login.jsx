@@ -22,11 +22,12 @@ const Login = () => {
     setError('');
     
     try {
-      const success = await login(username, password);
+      const result = await login(username, password);
+      const success = result === true || result?.success;
       if (success) {
         navigate(from, { replace: true });
       } else {
-        setError('Usuário ou senha inválidos.');
+        setError(result?.error || 'Usuário ou senha inválidos.');
       }
     } catch (err) {
       setError('Erro ao conectar ao servidor.');
