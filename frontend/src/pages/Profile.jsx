@@ -11,7 +11,8 @@ import {
   Check, 
   AlertCircle,
   CreditCard,
-  ShieldCheck
+  ShieldCheck,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../components/Auth/AuthContext';
 import { 
@@ -351,7 +352,30 @@ export default function Profile() {
         </form>
       </section>
 
-      {/* Card 3: Encerrar Sessão */}
+      {/* Card 3: Versão do Aplicativo */}
+      <section className="profile-card version-card">
+        <div className="profile-version-content">
+          <div>
+            <h4 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-dark)' }}>Versão do Sistema</h4>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+              {typeof __APP_BUILD_TIME__ !== 'undefined'
+                ? `Build: ${new Date(Number(__APP_BUILD_TIME__)).toLocaleString('pt-BR')}`
+                : 'Ambiente de desenvolvimento'}
+            </p>
+          </div>
+          <button 
+            type="button" 
+            className="profile-btn-reload"
+            onClick={() => window.location.reload()}
+            title="Recarregar aplicativo para buscar a versão mais recente"
+          >
+            <RefreshCw size={16} />
+            Recarregar App
+          </button>
+        </div>
+      </section>
+
+      {/* Card 4: Encerrar Sessão */}
       <section className="profile-card logout-card">
         <div className="profile-logout-content">
           <div>
