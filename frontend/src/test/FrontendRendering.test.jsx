@@ -83,5 +83,7 @@ describe('Validação de Renderização de Telas Frontend', () => {
     expect(await findByText('Meu Perfil')).toBeInTheDocument();
     expect(await findByText('Dados Cadastrais')).toBeInTheDocument();
     expect(await findByText('Segurança e Senha')).toBeInTheDocument();
+    expect(await findByText('Versão do Sistema')).toBeInTheDocument();
+    expect(await findByText('Recarregar App')).toBeInTheDocument();
   });
 });

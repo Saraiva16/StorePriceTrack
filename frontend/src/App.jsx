@@ -16,6 +16,7 @@ import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import BottomNav from './components/BottomNav/BottomNav';
+import VersionUpdatePrompt from './components/VersionUpdatePrompt/VersionUpdatePrompt';
 
 function AppContent() {
   const location = useLocation();
@@ -25,6 +26,7 @@ function AppContent() {
 
   return (
     <div className="app-layout">
+      <VersionUpdatePrompt />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

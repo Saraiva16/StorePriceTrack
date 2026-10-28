@@ -1,9 +1,32 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+const buildTimestamp = Date.now();
+
+const versionPlugin = () => ({
+  name: 'generate-version-file',
+  generateBundle() {
+    this.emitFile({
+      type: 'asset',
+      fileName: 'version.json',
+      source: JSON.stringify(
+        {
+          version: buildTimestamp,
+          builtAt: new Date(buildTimestamp).toISOString()
+        },
+        null,
+        2
+      )
+    });
+  }
+});
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), versionPlugin()],
+  define: {
+    __APP_BUILD_TIME__: JSON.stringify(buildTimestamp)
+  },
   server: {
     allowedHosts: true,
     proxy: {
