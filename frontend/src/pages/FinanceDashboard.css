@@ -769,11 +769,6 @@
   box-shadow: 0 8px 24px rgba(16, 185, 129, 0.45);
   transition: transform 0.2s, box-shadow 0.2s;
 }
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.45);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
 
 .finance-bar-fab:active .finance-bar-fab-inner {
   transform: scale(0.92);
