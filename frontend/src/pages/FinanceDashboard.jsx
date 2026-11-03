@@ -186,7 +186,7 @@ export default function FinanceDashboard() {
     if (!hasShortcutData) return;
 
     // Se uma categoria foi informada mas a listagem ainda não carregou, aguarda categories
-    if (rawCategory && categories.length === 0 && isLoading) {
+    if ((rawCategory && categories.length === 0 && isLoading) || (rawCard && cards.length === 0 && isLoading)) {
       return;
     }
 
@@ -194,8 +194,15 @@ export default function FinanceDashboard() {
 
     // 1. Tratamento do Valor Monetário
     if (rawAmount) {
-      const sanitized = String(rawAmount).trim().replace(',', '.');
-      const parsedNum = parseFloat(sanitized);
+      const cleaned = String(rawAmount).replace(/[^0-9.,]/g, '').trim();
+      let parsedNum = NaN;
+      if (cleaned.includes(',') && cleaned.includes('.')) {
+        parsedNum = parseFloat(cleaned.replace(/\./g, '').replace(',', '.'));
+      } else if (cleaned.includes(',')) {
+        parsedNum = parseFloat(cleaned.replace(',', '.'));
+      } else {
+        parsedNum = parseFloat(cleaned);
+      }
       if (!isNaN(parsedNum) && parsedNum > 0) {
         setTxAmountRaw(formatCurrency(parsedNum));
       }
@@ -274,7 +281,19 @@ export default function FinanceDashboard() {
           .toLowerCase();
       const cardTarget = normalize(rawCard);
       const foundCard = cards.find(
-        (c) => String(c.id) === String(rawCard).trim() || normalize(c.name) === cardTarget
+        (c) => {
+          const normName = normalize(c.name);
+          const normBank = normalize(c.bank);
+          return (
+            String(c.id) === String(rawCard).trim() ||
+            normName === cardTarget ||
+            normBank === cardTarget ||
+            normName.includes(cardTarget) ||
+            cardTarget.includes(normName) ||
+            normBank.includes(cardTarget) ||
+            cardTarget.includes(normBank)
+          );
+        }
       );
       if (foundCard) {
         setTxCardId(String(foundCard.id));

@@ -243,6 +243,21 @@ describe('Validação de Renderização de Telas Frontend', () => {
     expect(categorySelect.value).toBe('1');
   });
 
+  it('deve processar parâmetros do Apple Pay com prefixo monetário, comerciante e cartão', async () => {
+    const { findByText, container, findByDisplayValue } = render(
+      <MemoryRouter initialEntries={['/finance?amount=R$%2089,90&desc=Padaria%20Central&card=Nubank']}>
+        <FinanceDashboard />
+      </MemoryRouter>
+    );
+
+    expect(await findByText('Novo Lançamento')).toBeInTheDocument();
+    expect(await findByDisplayValue('89,90')).toBeInTheDocument();
+    expect(await findByDisplayValue('Padaria Central')).toBeInTheDocument();
+    const cardSelect = container.querySelector('#tx-card');
+    expect(cardSelect).not.toBeNull();
+    expect(cardSelect.value).toBe('10'); // Nubank Ultravioleta mockado com id 10
+  });
+
   it('deve renderizar a tela EstimatePurchase com mercados e produtos sem erros de runtime', async () => {
     // Mock do fetch global para os endpoints da tela de estimativa
     global.fetch = vi.fn().mockImplementation((url) => {
