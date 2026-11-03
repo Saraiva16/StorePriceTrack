@@ -10,7 +10,12 @@ import com.storepricetrack.store_price_track.modules.receipt_items.repository.Re
 import com.storepricetrack.store_price_track.modules.categories.repository.CategoriesRepository;
 import com.storepricetrack.store_price_track.modules.categories.entity.CategoriesEntity;
 import com.storepricetrack.store_price_track.modules.receipts.entity.ReceiptImportQueueEntity;
+import com.storepricetrack.store_price_track.modules.receipts.entity.UnsupportedNfceEntity;
 import com.storepricetrack.store_price_track.modules.receipts.repository.ReceiptImportQueueRepository;
+import com.storepricetrack.store_price_track.modules.receipts.repository.UnsupportedNfceRepository;
+import com.storepricetrack.store_price_track.modules.receipts.parser.NfceParserRegistry;
+import com.storepricetrack.store_price_track.modules.receipts.parser.INfceParser;
+import com.storepricetrack.store_price_track.modules.receipts.dto.NfceImportResponseDTO;
 import com.storepricetrack.store_price_track.modules.receipts.ai.ReceiptExtractionClient;
 import com.storepricetrack.store_price_track.modules.receipts.ai.ReceiptExtractionException;
 import com.storepricetrack.store_price_track.modules.receipts.ai.ReceiptExtractionResult;
@@ -50,6 +55,8 @@ public class ReceiptImportService implements IReceiptImportService {
     private final ProductsMasterRepository productsMasterRepository;
     private final CategoriesRepository categoriesRepository;
     private final ReceiptImportQueueRepository queueRepository;
+    private final UnsupportedNfceRepository unsupportedNfceRepository;
+    private final NfceParserRegistry parserRegistry;
 
     @Override
     @Caching(evict = {
@@ -86,6 +93,53 @@ public class ReceiptImportService implements IReceiptImportService {
             throw e;
         }
 
+        return processAndPersistReceipt(extraction);
+    }
+
+    @Override
+    @Caching(evict = {
+            @CacheEvict(value = "priceStats", allEntries = true),
+            @CacheEvict(value = "topProducts", allEntries = true),
+            @CacheEvict(value = "priceTrend", allEntries = true),
+            @CacheEvict(value = "marketComparison", allEntries = true),
+            @CacheEvict(value = "cheapestProducts", allEntries = true),
+            @CacheEvict(value = "mostExpensiveProducts", allEntries = true),
+            @CacheEvict(value = "bestShoppingDays", allEntries = true),
+            @CacheEvict(value = "purchasePattern", allEntries = true),
+            @CacheEvict(value = "products", allEntries = true)
+    })
+    public NfceImportResponseDTO importNfceUrl(String url) {
+        if (url == null || url.isBlank()) {
+            throw new IllegalArgumentException("URL da NFC-e não pode estar vazia");
+        }
+
+        Optional<INfceParser> parserOpt = parserRegistry.findParser(url);
+        String detectedUf = parserRegistry.detectUf(url);
+
+        if (parserOpt.isEmpty()) {
+            log.warn("No parser found for NFC-e URL (UF: {}): {}. Queuing for support...", detectedUf, url);
+            unsupportedNfceRepository.findByUrl(url).orElseGet(() -> {
+                UnsupportedNfceEntity entity = new UnsupportedNfceEntity();
+                entity.setUrl(url);
+                entity.setStateUf(detectedUf);
+                entity.setStatus("PENDING_PARSER");
+                entity.setNotes("Estado ainda sem parser implementado: " + detectedUf);
+                return unsupportedNfceRepository.save(entity);
+            });
+            return NfceImportResponseDTO.queued(
+                    detectedUf,
+                    "Nota fiscal do estado " + (detectedUf != null ? detectedUf : "não identificado") +
+                            " recebida! Estamos integrando o suporte a este estado e os dados serão alocados em breve."
+            );
+        }
+
+        INfceParser parser = parserOpt.get();
+        ReceiptExtractionResult extraction = parser.parse(url);
+        ReceiptResponseDTO responseDTO = processAndPersistReceipt(extraction);
+        return NfceImportResponseDTO.imported(responseDTO);
+    }
+
+    private ReceiptResponseDTO processAndPersistReceipt(ReceiptExtractionResult extraction) {
         if (extraction.accessKey() != null && receiptsRepository.findByAccessKey(extraction.accessKey()).isPresent()) {
             throw new DuplicateReceiptException("Recibo já importado (access_key: " + extraction.accessKey() + ")");
         }
