@@ -28,6 +28,8 @@ export default defineConfig({
     __APP_BUILD_TIME__: JSON.stringify(buildTimestamp)
   },
   server: {
+    host: true,
+    port: 5173,
     allowedHosts: true,
     proxy: {
       '/api': {

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider, useAuth } from './components/Auth/AuthContext';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import Home from './pages/Home';
+import FinanceDashboard from './pages/FinanceDashboard';
 import ImportReceipt from './pages/ImportReceipt';
 import EstimatePurchase from './pages/EstimatePurchase';
 import ShoppingCart from './pages/ShoppingCart';
@@ -37,6 +38,11 @@ function AppContent() {
         <Route path="/home" element={
           <ProtectedRoute>
             <Home />
+          </ProtectedRoute>
+        } />
+        <Route path="/finance" element={
+          <ProtectedRoute>
+            <FinanceDashboard />
           </ProtectedRoute>
         } />
         <Route path="/import" element={

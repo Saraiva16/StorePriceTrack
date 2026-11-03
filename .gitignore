@@ -21,3 +21,4 @@ ssh/
 
 # Dumps de banco de dados
 *.sql
+!backend/src/main/resources/db/migration/*.sql
