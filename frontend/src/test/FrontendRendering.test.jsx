@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import TripList from '../pages/TripList';
 import Profile from '../pages/Profile';
 import Home from '../pages/Home';
@@ -208,6 +208,39 @@ describe('Validação de Renderização de Telas Frontend', () => {
     expect(await findByText('Alimentação')).toBeInTheDocument();
     expect(await findByText('Transporte')).toBeInTheDocument();
     expect(await findByText('Fluxo Mensal (Receitas vs Despesas)')).toBeInTheDocument();
+  });
+
+  it('deve abrir automaticamente o modal de Novo Lançamento preenchido ao receber parâmetros do Atalho do iOS', async () => {
+    const { findByText, container, findByDisplayValue } = render(
+      <MemoryRouter initialEntries={['/finance?amount=45.90&category=Alimentação']}>
+        <FinanceDashboard />
+      </MemoryRouter>
+    );
+
+    // Deve abrir o modal de Novo Lançamento automaticamente
+    expect(await findByText('Novo Lançamento')).toBeInTheDocument();
+
+    // Deve ter preenchido o valor formatado 45,90
+    expect(await findByDisplayValue('45,90')).toBeInTheDocument();
+
+    // Deve ter a categoria Alimentação selecionada (id 1)
+    const categorySelect = container.querySelector('#tx-category');
+    expect(categorySelect).not.toBeNull();
+    expect(categorySelect.value).toBe('1');
+  });
+
+  it('deve normalizar emojis e sinônimos como Comida para a categoria Alimentação', async () => {
+    const { findByText, container, findByDisplayValue } = render(
+      <MemoryRouter initialEntries={['/finance?amount=50.00&category=Comida%20%F0%9F%8D%94']}>
+        <FinanceDashboard />
+      </MemoryRouter>
+    );
+
+    expect(await findByText('Novo Lançamento')).toBeInTheDocument();
+    expect(await findByDisplayValue('50,00')).toBeInTheDocument();
+    const categorySelect = container.querySelector('#tx-category');
+    expect(categorySelect).not.toBeNull();
+    expect(categorySelect.value).toBe('1');
   });
 
   it('deve renderizar a tela EstimatePurchase com mercados e produtos sem erros de runtime', async () => {

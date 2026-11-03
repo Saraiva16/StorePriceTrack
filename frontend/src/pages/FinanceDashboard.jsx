@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -76,6 +76,8 @@ const getCategoryIconComponent = (iconName, size = 18, color = 'currentColor') =
 
 export default function FinanceDashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasProcessedShortcut = useRef(false);
 
   // Mês e Ano Selecionados (Default: mês corrente)
   const today = useMemo(() => new Date(), []);
@@ -166,6 +168,140 @@ export default function FinanceDashboard() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Pré-preenchimento automático via atalhos do iOS / Parâmetros de URL
+  useEffect(() => {
+    if (hasProcessedShortcut.current) return;
+
+    const rawAmount = searchParams.get('amount') || searchParams.get('valor');
+    const rawCategory = searchParams.get('category') || searchParams.get('categoria');
+    const rawAction = searchParams.get('action') || searchParams.get('acao');
+    const rawDesc = searchParams.get('desc') || searchParams.get('descricao') || searchParams.get('description');
+    const rawDate = searchParams.get('date') || searchParams.get('data');
+    const rawMethod = searchParams.get('method') || searchParams.get('metodo') || searchParams.get('paymentMethod');
+    const rawCard = searchParams.get('card') || searchParams.get('cartao');
+    const rawObs = searchParams.get('obs') || searchParams.get('observacao') || searchParams.get('observation');
+
+    const hasShortcutData = Boolean(rawAmount || rawCategory || rawAction === 'new' || rawAction === 'novo');
+    if (!hasShortcutData) return;
+
+    // Se uma categoria foi informada mas a listagem ainda não carregou, aguarda categories
+    if (rawCategory && categories.length === 0 && isLoading) {
+      return;
+    }
+
+    hasProcessedShortcut.current = true;
+
+    // 1. Tratamento do Valor Monetário
+    if (rawAmount) {
+      const sanitized = String(rawAmount).trim().replace(',', '.');
+      const parsedNum = parseFloat(sanitized);
+      if (!isNaN(parsedNum) && parsedNum > 0) {
+        setTxAmountRaw(formatCurrency(parsedNum));
+      }
+    }
+
+    // 2. Data
+    if (rawDate && /^\d{4}-\d{2}-\d{2}$/.test(rawDate.trim())) {
+      setTxDate(rawDate.trim());
+    }
+
+    // 3. Forma de Pagamento
+    if (rawMethod) {
+      const upperMethod = rawMethod.trim().toUpperCase();
+      const validMethods = ['CREDIT_CARD', 'PIX', 'DEBIT_CARD', 'CASH', 'TRANSFER', 'OTHER'];
+      if (validMethods.includes(upperMethod)) {
+        setTxPaymentMethod(upperMethod);
+      }
+    }
+
+    // 4. Correspondência Inteligente de Categoria
+    let matchedCategory = null;
+    if (rawCategory && categories.length > 0) {
+      const normalize = (str) =>
+        String(str || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[\p{Emoji}\p{Extended_Pictographic}]/gu, '')
+          .replace(/[^a-zA-Z0-9\s]/g, '')
+          .trim()
+          .toLowerCase();
+      const target = normalize(rawCategory);
+
+      const SYNONYMS = {
+        comida: 'alimentacao',
+        refeicao: 'alimentacao',
+        lanche: 'alimentacao',
+        mercado: 'alimentacao',
+        supermercado: 'alimentacao',
+        shopping: 'compras',
+        passeio: 'lazer'
+      };
+
+      const resolvedTarget = SYNONYMS[target] || target;
+
+      matchedCategory = categories.find(
+        (c) => {
+          const norm = normalize(c.name);
+          return String(c.id) === String(rawCategory).trim() || norm === target || norm === resolvedTarget || norm.includes(resolvedTarget);
+        }
+      );
+
+      if (matchedCategory) {
+        setTxCategoryId(String(matchedCategory.id));
+        if (matchedCategory.type) {
+          setTxType(matchedCategory.type);
+        }
+      }
+    }
+
+    // 5. Descrição (usa a informada ou assume o nome da categoria como default amigável)
+    if (rawDesc && rawDesc.trim()) {
+      setTxDesc(rawDesc.trim());
+    } else if (matchedCategory && matchedCategory.name) {
+      setTxDesc(matchedCategory.name);
+    }
+
+    // 6. Cartão de Crédito
+    if (rawCard && cards.length > 0) {
+      const normalize = (str) =>
+        String(str || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[\p{Emoji}\p{Extended_Pictographic}]/gu, '')
+          .replace(/[^a-zA-Z0-9\s]/g, '')
+          .trim()
+          .toLowerCase();
+      const cardTarget = normalize(rawCard);
+      const foundCard = cards.find(
+        (c) => String(c.id) === String(rawCard).trim() || normalize(c.name) === cardTarget
+      );
+      if (foundCard) {
+        setTxCardId(String(foundCard.id));
+      }
+    } else if (cards.length === 1) {
+      setTxCardId(String(cards[0].id));
+    }
+
+    // 7. Observação
+    if (rawObs && rawObs.trim()) {
+      setTxObservation(rawObs.trim());
+    }
+
+    // Abre o modal de lançamento para revisão imediata
+    setIsTxModalOpen(true);
+
+    // Limpa silenciosamente os parâmetros da barra de endereço para evitar reexecução em refresh
+    const newParams = new URLSearchParams(searchParams);
+    const keysToRemove = [
+      'amount', 'valor', 'category', 'categoria', 'action', 'acao',
+      'desc', 'description', 'descricao', 'date', 'data',
+      'method', 'metodo', 'paymentMethod', 'card', 'cartao',
+      'obs', 'observacao', 'observation'
+    ];
+    keysToRemove.forEach((key) => newParams.delete(key));
+    setSearchParams(newParams, { replace: true });
+  }, [categories, cards, isLoading, searchParams, setSearchParams]);
 
   // Navegação de mês
   const handlePrevMonth = () => {
