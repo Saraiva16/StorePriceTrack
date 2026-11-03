@@ -6,6 +6,7 @@ import TripList from '../pages/TripList';
 import Profile from '../pages/Profile';
 import Home from '../pages/Home';
 import FinanceDashboard from '../pages/FinanceDashboard';
+import EstimatePurchase from '../pages/EstimatePurchase';
 
 // Mock do AuthContext
 vi.mock('../components/Auth/AuthContext', () => ({
@@ -207,5 +208,53 @@ describe('Validação de Renderização de Telas Frontend', () => {
     expect(await findByText('Alimentação')).toBeInTheDocument();
     expect(await findByText('Transporte')).toBeInTheDocument();
     expect(await findByText('Fluxo Mensal (Receitas vs Despesas)')).toBeInTheDocument();
+  });
+
+  it('deve renderizar a tela EstimatePurchase com mercados e produtos sem erros de runtime', async () => {
+    // Mock do fetch global para os endpoints da tela de estimativa
+    global.fetch = vi.fn().mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('/api/markets/networks')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(['Supermercado Extra', 'Pão de Açúcar'])
+        });
+      }
+      if (typeof url === 'string' && url.includes('/api/products')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            content: [
+              { id: 1, normalizedName: 'Arroz Tio João 5kg', categoryName: 'Mercearia' },
+              { id: 2, normalizedName: 'Feijão Carioca 1kg', categoryName: 'Mercearia' }
+            ]
+          })
+        });
+      }
+      if (typeof url === 'string' && url.includes('/api/estimate/recalculate')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            'Arroz Tio João 5kg': 25.90,
+            'Feijão Carioca 1kg': 8.50
+          })
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({})
+      });
+    });
+
+    const { findByText, findAllByText, getByPlaceholderText } = render(
+      <BrowserRouter>
+        <EstimatePurchase />
+      </BrowserRouter>
+    );
+
+    expect(await findByText('Estimativa Pessoal')).toBeInTheDocument();
+    expect(getByPlaceholderText('Adicionar novo produto...')).toBeInTheDocument();
+    const marketOptions = await findAllByText('Supermercado Extra');
+    expect(marketOptions.length).toBeGreaterThanOrEqual(1);
+    expect(await findByText('Fechar carrinho?')).toBeInTheDocument();
   });
 });
