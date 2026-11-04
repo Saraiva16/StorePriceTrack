@@ -5,6 +5,7 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 import Home from './pages/Home';
 import FinanceDashboard from './pages/FinanceDashboard';
 import ImportReceipt from './pages/ImportReceipt';
+import ReceiptConfirmation from './pages/ReceiptConfirmation';
 import EstimatePurchase from './pages/EstimatePurchase';
 import ShoppingCart from './pages/ShoppingCart';
 import EventPlanning from './pages/EventPlanning';
@@ -48,6 +49,11 @@ function AppContent() {
         <Route path="/import" element={
           <ProtectedRoute>
             <ImportReceipt />
+          </ProtectedRoute>
+        } />
+        <Route path="/receipt-confirmation" element={
+          <ProtectedRoute>
+            <ReceiptConfirmation />
           </ProtectedRoute>
         } />
         <Route path="/estimate" element={

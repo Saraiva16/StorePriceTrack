@@ -1,0 +1,190 @@
+.qr-scanner-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+}
+
+.qr-viewfinder-container {
+  position: relative;
+  width: 100%;
+  max-width: 330px;
+  height: 330px;
+  border-radius: 24px;
+  overflow: hidden;
+  background-color: #0b0f19;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.qr-video-element {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+.qr-video-element video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 24px;
+}
+
+/* Moldura Customizada com Cantos Destacados */
+.qr-target-frame {
+  position: absolute;
+  width: 230px;
+  height: 230px;
+  pointer-events: none;
+  transition: all 0.3s ease-in-out;
+  border-radius: 16px;
+}
+
+.frame-searching {
+  border: 2px dashed rgba(255, 255, 255, 0.4);
+}
+
+.frame-success {
+  border: 3px solid #2ed573 !important;
+  box-shadow: 0 0 25px rgba(46, 213, 115, 0.6);
+  background: rgba(46, 213, 115, 0.12);
+}
+
+/* Cantoneiras */
+.corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: #1e90ff;
+  border-style: solid;
+  pointer-events: none;
+  transition: border-color 0.3s;
+}
+
+.frame-success .corner {
+  border-color: #2ed573;
+}
+
+.corner-top-left {
+  top: -2px;
+  left: -2px;
+  border-width: 4px 0 0 4px;
+  border-top-left-radius: 12px;
+}
+
+.corner-top-right {
+  top: -2px;
+  right: -2px;
+  border-width: 4px 4px 0 0;
+  border-top-right-radius: 12px;
+}
+
+.corner-bottom-left {
+  bottom: -2px;
+  left: -2px;
+  border-width: 0 0 4px 4px;
+  border-bottom-left-radius: 12px;
+}
+
+.corner-bottom-right {
+  bottom: -2px;
+  right: -2px;
+  border-width: 0 4px 4px 0;
+  border-bottom-right-radius: 12px;
+}
+
+/* Linha Laser Animada de Varredura */
+.scanner-laser-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #1e90ff, transparent);
+  box-shadow: 0 0 8px #1e90ff;
+  animation: laserScan 2.4s ease-in-out infinite;
+}
+
+.frame-success .scanner-laser-line {
+  display: none;
+}
+
+@keyframes laserScan {
+  0% {
+    top: 5%;
+    opacity: 0.2;
+  }
+  50% {
+    top: 90%;
+    opacity: 1;
+  }
+  100% {
+    top: 5%;
+    opacity: 0.2;
+  }
+}
+
+.scan-success-badge {
+  position: absolute;
+  background: #2ed573;
+  color: white;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 10px 22px;
+  border-radius: 30px;
+  box-shadow: 0 4px 15px rgba(46, 213, 115, 0.4);
+  pointer-events: none;
+}
+
+/* Botão de Snapshot */
+.btn-capture-snapshot {
+  width: 100%;
+  max-width: 330px;
+  padding: 14px 20px;
+  border-radius: 50px;
+  border: none;
+  background-color: var(--card-primary-bg);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.btn-capture-snapshot:active {
+  transform: scale(0.98);
+}
+
+.btn-capture-snapshot:disabled {
+  background-color: #a4b0be;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.scanner-hint-text {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.scanner-error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ff4757;
+  font-size: 0.9rem;
+  background: rgba(255, 71, 87, 0.12);
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-align: center;
+  width: 100%;
+  max-width: 330px;
+}
