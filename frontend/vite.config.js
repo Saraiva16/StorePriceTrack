@@ -1,4 +1,5 @@
 import react from '@vitejs/plugin-react'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import { defineConfig } from 'vite'
 
 const buildTimestamp = Date.now();
@@ -23,18 +24,20 @@ const versionPlugin = () => ({
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), versionPlugin()],
+  plugins: [react(), basicSsl(), versionPlugin()],
   define: {
     __APP_BUILD_TIME__: JSON.stringify(buildTimestamp)
   },
   server: {
+    https: true,
     host: true,
     port: 5173,
     allowedHosts: true,
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8080',
-        changeOrigin: true
+        changeOrigin: true,
+        secure: false
       }
     }
   },

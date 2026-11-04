@@ -2,7 +2,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .icon-btn {
@@ -26,120 +26,206 @@
 .import-content {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
-.instruction-card {
+/* Banner explicativo */
+.qr-instruction-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
   background-color: var(--card-secondary-bg);
+  border-left: 4px solid var(--accent-color);
+  padding: 16px;
   border-radius: var(--border-radius-lg);
-  padding: 32px 24px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 32px;
 }
 
-.instruction-icon {
-  font-size: 48px;
-  margin-bottom: 8px;
-}
-
-.instruction-card h3 {
-  font-size: 20px;
-  color: var(--text-dark);
-}
-
-.instruction-card p {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.5;
-}
-
-.action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.btn-primary, .btn-secondary, .btn-upload {
+.qr-instruction-badge {
+  background: rgba(30, 144, 255, 0.12);
+  padding: 10px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  width: 100%;
-  padding: 16px;
-  border-radius: var(--border-radius-md);
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.qr-instruction-banner h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.05rem;
+  color: var(--text-dark);
+}
+
+.qr-instruction-banner p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Abas de Modo */
+.mode-selector-tabs {
+  display: flex;
+  background-color: var(--card-secondary-bg);
+  padding: 4px;
+  border-radius: 14px;
+  gap: 4px;
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
   border: none;
-  font-family: inherit;
-  transition: transform 0.2s, opacity 0.2s;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.btn-primary:active, .btn-secondary:active, .btn-upload:active {
-  transform: scale(0.98);
-}
-
-.btn-primary {
+.tab-btn-active {
   background-color: var(--card-primary-bg);
   color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn-secondary {
-  background-color: transparent;
-  color: var(--text-dark);
-  border: 2px solid var(--card-primary-bg);
+/* Feedback Banners */
+.feedback-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.9rem;
 }
 
-.btn-upload {
-  background-color: var(--accent-color);
-  color: white;
-  margin-top: 24px;
+.feedback-info {
+  background: rgba(46, 213, 115, 0.15);
+  color: #2ed573;
 }
 
-/* Preview Styles */
-.preview-container {
+.feedback-error {
+  background: rgba(255, 71, 87, 0.15);
+  color: #ff4757;
+}
+
+/* Modo Câmera */
+.camera-scan-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.preview-wrapper {
-  position: relative;
   width: 100%;
-  max-width: 320px;
-  border-radius: var(--border-radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
 }
 
-.image-preview {
+.processing-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 20px;
+  background-color: var(--card-secondary-bg);
+  border-radius: 20px;
   width: 100%;
-  height: auto;
-  display: block;
+  gap: 12px;
 }
 
-.clear-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background-color: rgba(0, 0, 0, 0.6);
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
+.processing-state-card h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-dark);
+}
+
+.processing-state-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Modo Arquivo */
+.file-scan-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.file-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  padding: 40px 20px;
+  border: 2px dashed var(--icon-color);
+  border-radius: 20px;
+  background-color: var(--card-secondary-bg);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.file-drop-zone:hover {
+  background-color: rgba(30, 144, 255, 0.05);
+}
+
+.drop-zone-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drop-zone-text strong {
+  font-size: 1rem;
+  color: var(--text-dark);
+}
+
+.drop-zone-text span {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.processing-state-inline {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s;
+  gap: 10px;
+  padding: 12px;
+  color: var(--accent-color);
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
-.clear-btn:active {
-  transform: scale(0.9);
+/* Modo Link */
+.manual-link-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.link-instructions {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+}
+
+.url-text-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-secondary-bg);
+  color: var(--text-dark);
+  font-size: 0.95rem;
+}
+
+.url-text-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
 }
 
 .spinner {
