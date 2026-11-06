@@ -182,7 +182,9 @@ export default function FinanceDashboard() {
     const rawCard = searchParams.get('card') || searchParams.get('cartao');
     const rawObs = searchParams.get('obs') || searchParams.get('observacao') || searchParams.get('observation');
 
-    const hasShortcutData = Boolean(rawAmount || rawCategory || rawAction === 'new' || rawAction === 'novo');
+    const hasShortcutData = Boolean(
+      rawAmount || rawCategory || rawDesc || rawCard || rawAction === 'new' || rawAction === 'novo'
+    );
     if (!hasShortcutData) return;
 
     // Se uma categoria foi informada mas a listagem ainda não carregou, aguarda categories
@@ -205,6 +207,9 @@ export default function FinanceDashboard() {
       }
       if (!isNaN(parsedNum) && parsedNum > 0) {
         setTxAmountRaw(formatCurrency(parsedNum));
+      } else {
+        const fallback = parseCurrencyToNumber(rawAmount);
+        if (fallback > 0) setTxAmountRaw(formatCurrency(fallback));
       }
     }
 
@@ -311,15 +316,22 @@ export default function FinanceDashboard() {
     setIsTxModalOpen(true);
 
     // Limpa silenciosamente os parâmetros da barra de endereço para evitar reexecução em refresh
-    const newParams = new URLSearchParams(searchParams);
+
     const keysToRemove = [
       'amount', 'valor', 'category', 'categoria', 'action', 'acao',
       'desc', 'description', 'descricao', 'date', 'data',
       'method', 'metodo', 'paymentMethod', 'card', 'cartao',
       'obs', 'observacao', 'observation'
     ];
-    keysToRemove.forEach((key) => newParams.delete(key));
-    setSearchParams(newParams, { replace: true });
+
+    // Limpeza silenciosa dos parâmetros via history API sem forçar re-render do react-router
+    setTimeout(() => {
+      const currentUrlParams = new URLSearchParams(window.location.search);
+      keysToRemove.forEach((key) => currentUrlParams.delete(key));
+      const remainingQuery = currentUrlParams.toString();
+      const updatedUrl = `${window.location.pathname}${remainingQuery ? `?${remainingQuery}` : ''}${window.location.hash || ''}`;
+      window.history.replaceState(null, '', updatedUrl);
+    }, 400);
   }, [categories, cards, isLoading, searchParams, setSearchParams]);
 
   // Navegação de mês
