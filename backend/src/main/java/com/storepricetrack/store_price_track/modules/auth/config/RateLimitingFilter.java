@@ -7,6 +7,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
 
+    @Value("${spring.profiles.active:default}")
+    private String activeProfile;
+
     // Simple in-memory cache for IP addresses
     private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
 
@@ -28,11 +32,29 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private Bucket newBucket(String ip) {
-        // Allows 5 requests per 15 minutes per IP
+        // Em desenvolvimento ou para conexões locais, limite alto para não bloquear testes
+        if (isLocalOrDevIp(ip)) {
+            Bandwidth devLimit = Bandwidth.classic(500, Refill.intervally(500, Duration.ofMinutes(1)));
+            return Bucket.builder().addLimit(devLimit).build();
+        }
+
+        // Em produção para IPs externos: 5 requisições a cada 15 minutos
         Bandwidth limit = Bandwidth.classic(5, Refill.intervally(5, Duration.ofMinutes(15)));
         return Bucket.builder()
                 .addLimit(limit)
                 .build();
+    }
+
+    private boolean isLocalOrDevIp(String ip) {
+        if (!"prod".equalsIgnoreCase(activeProfile)) {
+            return true;
+        }
+        if (ip == null) return false;
+        return ip.equals("127.0.0.1") || 
+               ip.equals("0:0:0:0:0:0:0:1") || 
+               ip.startsWith("192.168.") || 
+               ip.startsWith("10.") || 
+               ip.startsWith("172.");
     }
 
     @Override

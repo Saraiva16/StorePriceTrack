@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Receipt, PiggyBank, Pencil, User, Check, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, Receipt, PiggyBank, Pencil, User, Check, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/Auth/AuthContext';
 import './Home.css';

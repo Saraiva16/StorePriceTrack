@@ -16,6 +16,7 @@ import com.storepricetrack.store_price_track.modules.receipts.repository.Unsuppo
 import com.storepricetrack.store_price_track.modules.receipts.parser.NfceParserRegistry;
 import com.storepricetrack.store_price_track.modules.receipts.parser.INfceParser;
 import com.storepricetrack.store_price_track.modules.receipts.dto.NfceImportResponseDTO;
+import com.storepricetrack.store_price_track.modules.receipts.dto.NfcePreviewResponseDTO;
 import com.storepricetrack.store_price_track.modules.receipts.ai.ReceiptExtractionClient;
 import com.storepricetrack.store_price_track.modules.receipts.ai.ReceiptExtractionException;
 import com.storepricetrack.store_price_track.modules.receipts.ai.ReceiptExtractionResult;
@@ -57,6 +58,7 @@ public class ReceiptImportService implements IReceiptImportService {
     private final ReceiptImportQueueRepository queueRepository;
     private final UnsupportedNfceRepository unsupportedNfceRepository;
     private final NfceParserRegistry parserRegistry;
+    private final ReceiptCurationService curationService;
 
     @Override
     @Caching(evict = {
@@ -133,10 +135,43 @@ public class ReceiptImportService implements IReceiptImportService {
             );
         }
 
+        return importNfceUrl(url, null);
+    }
+
+    @Override
+    public NfceImportResponseDTO importNfceUrl(String url, com.storepricetrack.store_price_track.modules.auth.entity.User user) {
+        if (url == null || url.isBlank()) {
+            throw new IllegalArgumentException("URL da NFC-e não pode estar vazia");
+        }
+
+        Optional<INfceParser> parserOpt = parserRegistry.findParser(url);
+        String detectedUf = parserRegistry.detectUf(url);
+
+        if (parserOpt.isEmpty()) {
+            log.warn("No parser found for NFC-e URL (UF: {}): {}. Queuing for support...", detectedUf, url);
+            unsupportedNfceRepository.findByUrl(url).orElseGet(() -> {
+                UnsupportedNfceEntity entity = new UnsupportedNfceEntity();
+                entity.setUrl(url);
+                entity.setStateUf(detectedUf);
+                entity.setStatus("PENDING_PARSER");
+                entity.setNotes("Estado ainda sem parser implementado: " + detectedUf);
+                return unsupportedNfceRepository.save(entity);
+            });
+            return NfceImportResponseDTO.queued(
+                    detectedUf,
+                    "Nota fiscal do estado " + (detectedUf != null ? detectedUf : "não identificado") +
+                            " recebida! Estamos integrando o suporte a este estado e os dados serão alocados em breve."
+            );
+        }
+
         INfceParser parser = parserOpt.get();
         ReceiptExtractionResult extraction = parser.parse(url);
-        ReceiptResponseDTO responseDTO = processAndPersistReceipt(extraction);
-        return NfceImportResponseDTO.imported(responseDTO);
+        if (extraction.accessKey() != null && receiptsRepository.findByAccessKey(extraction.accessKey()).isPresent()) {
+            throw new DuplicateReceiptException("Esta nota fiscal já foi importada anteriormente no sistema (chave: " + extraction.accessKey() + ").");
+        }
+
+        NfcePreviewResponseDTO preview = curationService.buildPreview(extraction, url);
+        return NfceImportResponseDTO.preview(preview);
     }
 
     private ReceiptResponseDTO processAndPersistReceipt(ReceiptExtractionResult extraction) {

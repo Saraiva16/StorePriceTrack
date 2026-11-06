@@ -14,6 +14,7 @@ import TripList from './pages/TripList';
 import TripDetails from './pages/TripDetails';
 import TripExpenses from './pages/TripExpenses';
 import UsersManagement from './pages/UsersManagement';
+import AdminCuration from './pages/AdminCuration';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';

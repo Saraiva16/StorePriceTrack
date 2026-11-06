@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Minus, X, Search, Sparkles } from 'lucide-react';
 import { maskCurrencyInput, parseCurrencyToNumber } from '../../utils/currency';
@@ -20,6 +20,8 @@ export default function BottomSheet({
   const [searchQuery, setSearchQuery] = useState('');
   const [customPrice, setCustomPrice] = useState('');
   const [customQty, setCustomQty] = useState('1');
+  const [isCustomExpanded, setIsCustomExpanded] = useState(false);
+  const productsListRef = useRef(null);
 
   // Limpa busca quando o modal é fechado
   useEffect(() => {
@@ -27,8 +29,16 @@ export default function BottomSheet({
       setSearchQuery('');
       setCustomPrice('');
       setCustomQty('1');
+      setIsCustomExpanded(false);
     }
   }, [isOpen]);
+
+  // Ao digitar ou trocar de categoria, rola a lista de produtos de volta para o topo
+  useEffect(() => {
+    if (productsListRef.current) {
+      productsListRef.current.scrollTop = 0;
+    }
+  }, [searchQuery, selectedCategory]);
 
   const filteredProducts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -64,7 +74,11 @@ export default function BottomSheet({
     setSearchQuery('');
     setCustomPrice('');
     setCustomQty('1');
+    setIsCustomExpanded(false);
   };
+
+  const hasSearch = searchQuery.trim().length > 0;
+  const showCustomForm = !hasSearch || filteredProducts.length === 0 || isCustomExpanded;
 
   return createPortal(
     <>
@@ -111,61 +125,8 @@ export default function BottomSheet({
           ))}
         </div>
 
-        {/* Card para Adicionar Produto Novo com Preço Estimado */}
-        {searchQuery.trim().length > 0 && (
-          <form className="sheet-custom-card" onSubmit={handleCreateCustom}>
-            <div className="custom-card-header">
-              <Sparkles size={16} color="var(--accent-color)" />
-              <span>
-                {hasExactMatch ? 'Adicionar item com preço personalizado:' : 'Produto não listado? Adicione com seu valor estimado:'}
-              </span>
-            </div>
-            <div className="custom-card-body">
-              <div className="custom-product-title">
-                <strong>"{searchQuery.trim()}"</strong>
-              </div>
-              <div className="custom-card-fields">
-                <div className="custom-field-group">
-                  <label>Valor estimado</label>
-                  <div className="custom-price-wrapper">
-                    <span className="price-prefix">R$</span>
-                    <input 
-                      type="text" 
-                      inputMode="numeric"
-                      placeholder="0,00"
-                      value={customPrice}
-                      onChange={(e) => setCustomPrice(maskCurrencyInput(e.target.value))}
-                      className="custom-input-price"
-                    />
-                  </div>
-                </div>
-
-                <div className="custom-field-group custom-field-qty">
-                  <label>Qtd</label>
-                  <input 
-                    type="text"
-                    inputMode="numeric"
-                    value={customQty}
-                    onChange={(e) => setCustomQty(e.target.value.replace(/[^0-9]/g, ''))}
-                    className="custom-input-qty"
-                  />
-                </div>
-
-                <button 
-                  type="submit" 
-                  className="btn-add-custom-product"
-                  disabled={!searchQuery.trim()}
-                >
-                  <Plus size={18} />
-                  <span>Adicionar</span>
-                </button>
-              </div>
-            </div>
-          </form>
-        )}
-
-        {/* Lista de Produtos Encontrados */}
-        <div className="sheet-products-list">
+        {/* Lista de Produtos Encontrados (Vêm PRIMEIRO para ficarem visíveis com o teclado) */}
+        <div className="sheet-products-list" ref={productsListRef}>
           {filteredProducts.map(product => {
             const addedItem = items.find(i => i.name === product.name);
             return (
@@ -182,11 +143,21 @@ export default function BottomSheet({
                 </div>
                 <div className="sheet-product-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   {addedItem && addedItem.qty > 0 && (
-                    <button className="sub-sheet-btn" onClick={() => onRemoveFromSheet(product)} type="button">
+                    <button 
+                      className="sub-sheet-btn" 
+                      onClick={() => onRemoveFromSheet(product)} 
+                      onMouseDown={(e) => e.preventDefault()}
+                      type="button"
+                    >
                       <Minus size={20} />
                     </button>
                   )}
-                  <button className="add-sheet-btn" onClick={() => onAddFromSheet(product)} type="button">
+                  <button 
+                    className="add-sheet-btn" 
+                    onClick={() => onAddFromSheet(product)} 
+                    onMouseDown={(e) => e.preventDefault()}
+                    type="button"
+                  >
                     <Plus size={20} />
                   </button>
                 </div>
@@ -198,8 +169,76 @@ export default function BottomSheet({
             <div className="sheet-empty-results">
               <p>Nenhum produto cadastrado corresponde a "<strong>{searchQuery}</strong>".</p>
               <p style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
-                Preencha o valor estimado acima e clique em <strong>Adicionar</strong> para inseri-lo na sua lista!
+                Você pode cadastrá-lo abaixo com o valor estimado!
               </p>
+            </div>
+          )}
+
+          {/* Card para Adicionar Produto Novo / Valor Estimado */}
+          {hasSearch && (
+            <div className="sheet-custom-wrapper">
+              {!showCustomForm ? (
+                <button 
+                  type="button" 
+                  className="btn-toggle-custom-product"
+                  onClick={() => setIsCustomExpanded(true)}
+                  onMouseDown={(e) => e.preventDefault()}
+                >
+                  <Sparkles size={16} color="var(--accent-color)" />
+                  <span>Não é esse? <strong>Cadastrar "{searchQuery.trim()}"</strong> com valor estimado</span>
+                </button>
+              ) : (
+                <form className="sheet-custom-card" onSubmit={handleCreateCustom}>
+                  <div className="custom-card-header">
+                    <Sparkles size={16} color="var(--accent-color)" />
+                    <span>
+                      {hasExactMatch ? 'Adicionar item com preço personalizado:' : 'Produto não listado? Adicione com seu valor estimado:'}
+                    </span>
+                  </div>
+                  <div className="custom-card-body">
+                    <div className="custom-product-title">
+                      <strong>"{searchQuery.trim()}"</strong>
+                    </div>
+                    <div className="custom-card-fields">
+                      <div className="custom-field-group">
+                        <label>Valor estimado</label>
+                        <div className="custom-price-wrapper">
+                          <span className="price-prefix">R$</span>
+                          <input 
+                            type="text" 
+                            inputMode="numeric"
+                            placeholder="0,00"
+                            value={customPrice}
+                            onChange={(e) => setCustomPrice(maskCurrencyInput(e.target.value))}
+                            className="custom-input-price"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="custom-field-group custom-field-qty">
+                        <label>Qtd</label>
+                        <input 
+                          type="text" 
+                          inputMode="numeric"
+                          value={customQty}
+                          onChange={(e) => setCustomQty(e.target.value.replace(/[^0-9]/g, ''))}
+                          className="custom-input-qty"
+                        />
+                      </div>
+
+                      <button 
+                        type="submit" 
+                        className="btn-add-custom-product"
+                        disabled={!searchQuery.trim()}
+                        onMouseDown={(e) => e.preventDefault()}
+                      >
+                        <Plus size={18} />
+                        <span>Adicionar</span>
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
             </div>
           )}
         </div>
@@ -208,4 +247,3 @@ export default function BottomSheet({
     document.getElementById('root')
   );
 }
-

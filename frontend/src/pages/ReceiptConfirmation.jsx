@@ -1,14 +1,34 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronLeft, CheckCircle, Store, Calendar, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Store, Calendar, ShieldCheck, Edit3, Loader2 } from 'lucide-react';
+import { submitConfirmedReceipt } from '../services/receiptsService';
 import './ReceiptConfirmation.css';
 
 export default function ReceiptConfirmation() {
   const location = useLocation();
   const navigate = useNavigate();
-  const receipt = location.state?.receipt;
+  const preview = location.state?.preview;
+  const legacyReceipt = location.state?.receipt;
 
-  if (!receipt) {
+  const data = preview || legacyReceipt;
+
+  const initialItems = (data?.items || []).map(it => ({
+    originalName: it.originalName || it.original_name || it.name || '',
+    normalizedName: it.normalizedName || it.name || it.originalName || it.original_name || '',
+    brand: it.brand || '',
+    unitMeasure: it.unitMeasure || it.unit_measure || 'un',
+    quantity: it.quantity ?? 1,
+    unitPrice: it.unitPrice ?? it.unit_price ?? 0,
+    totalPrice: it.totalPrice ?? it.total_price ?? ((it.quantity ?? 1) * (it.unitPrice ?? it.unit_price ?? 0)),
+    category: it.category || 'Outros'
+  }));
+
+  const [items, setItems] = useState(initialItems);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  if (!data) {
     return (
       <div className="page-container animate-slide-up">
         <div className="header-bar">
@@ -28,15 +48,52 @@ export default function ReceiptConfirmation() {
     );
   }
 
-  const items = receipt.items || [];
-  const marketName = receipt.market_name || receipt.marketName || 'Estabelecimento Comercial';
-  const totalAmount = receipt.total_amount ?? receipt.totalAmount ?? 0;
-  const purchaseDate = receipt.purchase_date || receipt.purchaseDate;
-  const accessKey = receipt.access_key || receipt.accessKey;
+  const marketName = data.marketName || data.market_name || 'Estabelecimento Comercial';
+  const totalAmount = data.totalAmount ?? data.total_amount ?? 0;
+  const purchaseDate = data.purchaseDate || data.purchase_date;
+  const accessKey = data.accessKey || data.access_key;
+  const sourceUrl = data.sourceUrl || data.source_url;
+  const cnpj = data.cnpj || data.marketCnpj || data.market_cnpj;
 
   const formattedDate = purchaseDate 
     ? new Date(purchaseDate).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
     : 'Data não informada';
+
+  const handleItemNameChange = (index, newName) => {
+    const updated = [...items];
+    updated[index].normalizedName = newName;
+    setItems(updated);
+  };
+
+  const handleConfirmAndSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      if (preview) {
+        // Envia para a curadoria em análise com os nomes que o usuário conferiu/ajustou
+        const payload = {
+          sourceUrl,
+          accessKey,
+          marketName,
+          marketCnpj: cnpj,
+          purchaseDate: purchaseDate ? String(purchaseDate) : null,
+          totalAmount,
+          items
+        };
+        await submitConfirmedReceipt(payload);
+        setSuccessMessage('Nota conferida e enviada com sucesso! Em instantes os dados estarão no sistema.');
+        setTimeout(() => {
+          navigate('/home');
+        }, 3000);
+      } else {
+        navigate('/home');
+      }
+    } catch (e) {
+      console.error(e);
+      alert(e.message || 'Falha ao enviar conferência da nota.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="page-container animate-slide-up">
@@ -49,12 +106,18 @@ export default function ReceiptConfirmation() {
       </div>
 
       <div className="receipt-confirmation-content">
+        {successMessage && (
+          <div className="curation-alert-info" style={{ margin: '16px 0', background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '14px', borderRadius: '12px' }}>
+            {successMessage}
+          </div>
+        )}
+
         <div className="confirmation-header-card">
           <div className="market-badge">
             <Store size={22} className="market-icon" />
             <div>
               <h3>{marketName}</h3>
-              {receipt.cnpj && <span className="cnpj-text">CNPJ: {receipt.cnpj}</span>}
+              {cnpj && <span className="cnpj-text">CNPJ: {cnpj}</span>}
             </div>
           </div>
 
@@ -75,26 +138,64 @@ export default function ReceiptConfirmation() {
         <div className="items-list-section">
           <div className="items-list-header">
             <h4>Itens da Nota ({items.length})</h4>
-            <span className="helper-hint">Confira os valores com o cupom em mãos</span>
+            <span className="helper-hint">Toque para corrigir algum nome abreviado se necessário</span>
           </div>
 
           <div className="items-scroll-list">
             {items.map((item, index) => {
-              const itemName = item.original_name || item.originalName || item.name || 'Produto sem nome';
-              const qty = item.quantity ?? 1;
-              const unitPrice = item.unit_price ?? item.unitPrice ?? 0;
-              const totalPrice = item.total_price ?? item.totalPrice ?? (qty * unitPrice);
+              const isEditing = editingIndex === index;
+              const displayName = item.normalizedName || item.originalName;
 
               return (
-                <div key={index} className="confirmed-item-row">
-                  <div className="item-main-col">
-                    <span className="item-title">{itemName}</span>
-                    <span className="item-qty">
-                      {qty} {qty > 1 ? 'unidades' : 'unidade'} × R$ {Number(unitPrice).toFixed(2).replace('.', ',')}
-                    </span>
-                  </div>
-                  <div className="item-total-col">
-                    <strong>R$ {Number(totalPrice).toFixed(2).replace('.', ',')}</strong>
+                <div key={index} className="confirmed-item-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="item-main-col" style={{ flex: 1, paddingRight: '10px' }}>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <input 
+                            type="text" 
+                            className="item-edit-input"
+                            value={item.normalizedName}
+                            onChange={(e) => handleItemNameChange(index, e.target.value)}
+                            autoFocus
+                            style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid #4361ee', width: '100%', fontSize: '14px' }}
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => setEditingIndex(null)}
+                            style={{ background: '#4361ee', color: 'white', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer' }}
+                          >
+                            Salvar
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className="item-title">{displayName}</span>
+                          <button 
+                            type="button" 
+                            onClick={() => setEditingIndex(index)}
+                            style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '2px' }}
+                            title="Editar nome"
+                          >
+                            <Edit3 size={14} />
+                          </button>
+                        </div>
+                      )}
+                      
+                      {item.originalName && item.originalName !== item.normalizedName && (
+                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                          Nota: {item.originalName}
+                        </span>
+                      )}
+
+                      <span className="item-qty">
+                        {item.quantity} {item.unitMeasure || 'un'} × R$ {Number(item.unitPrice).toFixed(2).replace('.', ',')}
+                      </span>
+                    </div>
+
+                    <div className="item-total-col">
+                      <strong>R$ {Number(item.totalPrice).toFixed(2).replace('.', ',')}</strong>
+                    </div>
                   </div>
                 </div>
               );
@@ -112,10 +213,11 @@ export default function ReceiptConfirmation() {
 
           <button 
             className="btn-primary btn-confirm-action" 
-            onClick={() => navigate('/home')}
+            onClick={handleConfirmAndSubmit}
+            disabled={isSubmitting || Boolean(successMessage)}
           >
-            <CheckCircle size={22} />
-            Confirmar e Concluir
+            {isSubmitting ? <Loader2 className="spinner" size={22} /> : <CheckCircle size={22} />}
+            <span>{isSubmitting ? 'Enviando...' : 'Confirmar e Concluir'}</span>
           </button>
         </div>
       </div>
