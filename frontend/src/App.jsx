@@ -92,6 +92,11 @@ function AppContent() {
             <TripExpenses />
           </ProtectedRoute>
         } />
+        <Route path="/admin/curation" element={
+          <ProtectedRoute>
+            <AdminCuration />
+          </ProtectedRoute>
+        } />
         <Route path="/users" element={
           <ProtectedRoute>
             <UsersManagement />

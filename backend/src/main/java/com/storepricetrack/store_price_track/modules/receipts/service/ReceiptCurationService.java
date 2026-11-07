@@ -7,6 +7,7 @@ import com.storepricetrack.store_price_track.modules.categories.entity.Categorie
 import com.storepricetrack.store_price_track.modules.categories.repository.CategoriesRepository;
 import com.storepricetrack.store_price_track.modules.markets.entity.MarketsEntity;
 import com.storepricetrack.store_price_track.modules.markets.repository.MarketsRepository;
+import com.storepricetrack.store_price_track.modules.notifications.service.NotificationService;
 import com.storepricetrack.store_price_track.modules.products_master.entity.ProductsMasterEntity;
 import com.storepricetrack.store_price_track.modules.products_master.repository.ProductsMasterRepository;
 import com.storepricetrack.store_price_track.modules.receipt_items.entity.ReceiptItemsEntity;
@@ -38,7 +39,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -55,32 +58,15 @@ public class ReceiptCurationService {
     private final ProductsMasterRepository productsMasterRepository;
     private final CategoriesRepository categoriesRepository;
     private final NfceItemNormalizerService normalizerService;
+    private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
 
     /**
      * Constrói o preview com itens já normalizados para o usuário revisar na tela de confirmação.
+     * Utiliza o mecanismo de memória histórica (De-Para aprendido de notas anteriores) antes do fallback para regex.
      */
     public com.storepricetrack.store_price_track.modules.receipts.dto.NfcePreviewResponseDTO buildPreview(ReceiptExtractionResult extraction, String sourceUrl) {
-        List<CurationItemDTO> curationItems = new ArrayList<>();
-        if (extraction.items() != null) {
-            for (ReceiptExtractionItem item : extraction.items()) {
-                var normalized = normalizerService.normalize(item.name(), "un");
-                BigDecimal qty = item.quantity() != null ? item.quantity() : BigDecimal.ONE;
-                BigDecimal unitPrice = item.unitPrice() != null ? item.unitPrice() : BigDecimal.ZERO;
-                BigDecimal totalPrice = item.totalPrice() != null ? item.totalPrice() : qty.multiply(unitPrice);
-
-                curationItems.add(new CurationItemDTO(
-                        item.name(),
-                        normalized.normalizedName(),
-                        normalized.brand(),
-                        normalized.unitMeasure(),
-                        qty,
-                        unitPrice,
-                        totalPrice,
-                        item.category()
-                ));
-            }
-        }
+        List<CurationItemDTO> curationItems = processItemsWithMemoryAndNormalizer(extraction.items());
 
         return new com.storepricetrack.store_price_track.modules.receipts.dto.NfcePreviewResponseDTO(
                 extraction.marketName(),
@@ -95,6 +81,7 @@ public class ReceiptCurationService {
 
     /**
      * Usuário submete a nota revisada para a fila de curadoria.
+     * Garante que os nomes normalizados pelo usuário estejam em MAIÚSCULAS.
      */
     public ReceiptCurationEntity submitUserConfirmedToCuration(com.storepricetrack.store_price_track.modules.receipts.dto.SubmitCurationRequestDTO request, User user) {
         if (request.accessKey() != null && !request.accessKey().isBlank()) {
@@ -103,7 +90,27 @@ public class ReceiptCurationService {
             }
         }
 
-        String itemsJson = serializeItems(request.items() != null ? request.items() : List.of());
+        List<CurationItemDTO> sanitizedItems = (request.items() != null ? request.items() : List.<CurationItemDTO>of())
+                .stream()
+                .map(it -> {
+                    String orig = it.originalName() != null ? it.originalName().trim() : "";
+                    String norm = it.normalizedName() != null && !it.normalizedName().isBlank()
+                            ? it.normalizedName().trim().toUpperCase()
+                            : (orig.isBlank() ? "PRODUTO" : orig.toUpperCase());
+                    return new CurationItemDTO(
+                            orig,
+                            norm,
+                            it.brand(),
+                            it.unitMeasure(),
+                            it.quantity(),
+                            it.unitPrice(),
+                            it.totalPrice(),
+                            it.category()
+                    );
+                })
+                .toList();
+
+        String itemsJson = serializeItems(sanitizedItems);
 
         ReceiptCurationEntity entity = ReceiptCurationEntity.builder()
                 .user(user)
@@ -117,8 +124,10 @@ public class ReceiptCurationService {
                 .itemsPayload(itemsJson)
                 .build();
 
-        log.info("User submitted confirmed receipt to curation: accessKey={}, items={}", request.accessKey(), request.items() != null ? request.items().size() : 0);
-        return curationRepository.save(entity);
+        ReceiptCurationEntity saved = curationRepository.save(entity);
+        log.info("User submitted confirmed receipt to curation: accessKey={}, items={}", request.accessKey(), sanitizedItems.size());
+        notificationService.notifyAdminsOfNewReceipt(saved);
+        return saved;
     }
 
     /**
@@ -131,28 +140,7 @@ public class ReceiptCurationService {
             }
         }
 
-        // Converte e normaliza os itens da nota com o NfceItemNormalizerService
-        List<CurationItemDTO> curationItems = new ArrayList<>();
-        if (extraction.items() != null) {
-            for (ReceiptExtractionItem item : extraction.items()) {
-                var normalized = normalizerService.normalize(item.name(), "un");
-                BigDecimal qty = item.quantity() != null ? item.quantity() : BigDecimal.ONE;
-                BigDecimal unitPrice = item.unitPrice() != null ? item.unitPrice() : BigDecimal.ZERO;
-                BigDecimal totalPrice = item.totalPrice() != null ? item.totalPrice() : qty.multiply(unitPrice);
-
-                curationItems.add(new CurationItemDTO(
-                        item.name(),
-                        normalized.normalizedName(),
-                        normalized.brand(),
-                        normalized.unitMeasure(),
-                        qty,
-                        unitPrice,
-                        totalPrice,
-                        item.category()
-                ));
-            }
-        }
-
+        List<CurationItemDTO> curationItems = processItemsWithMemoryAndNormalizer(extraction.items());
         String itemsJson = serializeItems(curationItems);
 
         ReceiptCurationEntity entity = ReceiptCurationEntity.builder()
@@ -167,8 +155,94 @@ public class ReceiptCurationService {
                 .itemsPayload(itemsJson)
                 .build();
 
-        log.info("Receipt submitted to curation queue: accessKey={}, items={}", extraction.accessKey(), curationItems.size());
-        return curationRepository.save(entity);
+        ReceiptCurationEntity saved = curationRepository.save(entity);
+        log.info("Auto submitted extracted receipt to curation: accessKey={}, items={}", extraction.accessKey(), curationItems.size());
+        notificationService.notifyAdminsOfNewReceipt(saved);
+        return saved;
+    }
+
+    /**
+     * Mecanismo de Memória & Normalização:
+     * 1. Consulta em lote no histórico de itens curados previamente (receipt_items).
+     * 2. Se encontrar registro histórico para o nome cru do item, reutiliza o nome consolidado.
+     * 3. Caso contrário, executa a normalização algorítmica (dicionários e regex).
+     * 4. Enforce estrito de todas as letras em MAIÚSCULAS no nome normalizado.
+     */
+    private List<CurationItemDTO> processItemsWithMemoryAndNormalizer(List<ReceiptExtractionItem> rawItems) {
+        if (rawItems == null || rawItems.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> rawNamesLower = rawItems.stream()
+                .map(ReceiptExtractionItem::name)
+                .filter(name -> name != null && !name.isBlank())
+                .map(name -> name.trim().toLowerCase())
+                .distinct()
+                .toList();
+
+        Map<String, ProductsMasterEntity> historicalMemoryMap = new HashMap<>();
+        if (!rawNamesLower.isEmpty()) {
+            try {
+                List<ReceiptItemsEntity> historyMatches = receiptItemsRepository.findHistoricalMatchesByOriginalNames(rawNamesLower);
+                for (ReceiptItemsEntity match : historyMatches) {
+                    if (match.getOriginalNameOnReceipt() != null && match.getProduct() != null) {
+                        String key = match.getOriginalNameOnReceipt().trim().toLowerCase();
+                        // A query está ordenada por ri.id DESC, portanto putIfAbsent preserva a curadoria mais recente
+                        historicalMemoryMap.putIfAbsent(key, match.getProduct());
+                    }
+                }
+            } catch (Exception ex) {
+                log.warn("Falha ao buscar histórico de memória para itens da nota: {}", ex.getMessage());
+            }
+        }
+
+        List<CurationItemDTO> curationItems = new ArrayList<>(rawItems.size());
+        for (ReceiptExtractionItem item : rawItems) {
+            String originalRawName = item.name() != null ? item.name().trim() : "";
+            String key = originalRawName.toLowerCase();
+
+            String normalizedName;
+            String brand = "";
+            String unitMeasure = "un";
+            String category = item.category();
+
+            if (!key.isEmpty() && historicalMemoryMap.containsKey(key)) {
+                ProductsMasterEntity historicalProduct = historicalMemoryMap.get(key);
+                normalizedName = historicalProduct.getNormalizedName() != null 
+                        ? historicalProduct.getNormalizedName().trim().toUpperCase() 
+                        : originalRawName.toUpperCase();
+                brand = historicalProduct.getBrand() != null ? historicalProduct.getBrand() : "";
+                if (historicalProduct.getUnitMeasure() != null && !historicalProduct.getUnitMeasure().isBlank()) {
+                    unitMeasure = historicalProduct.getUnitMeasure();
+                }
+                if (historicalProduct.getCategory() != null) {
+                    category = historicalProduct.getCategory().getName();
+                }
+                log.info("Memória de aprendizado aplicada: '{}' -> '{}'", originalRawName, normalizedName);
+            } else {
+                var normalized = normalizerService.normalize(originalRawName, unitMeasure);
+                normalizedName = (normalized.normalizedName() != null ? normalized.normalizedName() : originalRawName).trim().toUpperCase();
+                brand = normalized.brand();
+                unitMeasure = normalized.unitMeasure();
+            }
+
+            BigDecimal qty = item.quantity() != null ? item.quantity() : BigDecimal.ONE;
+            BigDecimal unitPrice = item.unitPrice() != null ? item.unitPrice() : BigDecimal.ZERO;
+            BigDecimal totalPrice = item.totalPrice() != null ? item.totalPrice() : qty.multiply(unitPrice);
+
+            curationItems.add(new CurationItemDTO(
+                    originalRawName,
+                    normalizedName,
+                    brand,
+                    unitMeasure,
+                    qty,
+                    unitPrice,
+                    totalPrice,
+                    category
+            ));
+        }
+
+        return curationItems;
     }
 
     @Transactional(readOnly = true)
@@ -290,8 +364,8 @@ public class ReceiptCurationService {
 
     private ProductsMasterEntity resolveOrCreateProductMaster(CurationItemDTO itemDTO) {
         String normName = itemDTO.normalizedName() != null && !itemDTO.normalizedName().isBlank()
-                ? itemDTO.normalizedName().trim()
-                : itemDTO.originalName().trim();
+                ? itemDTO.normalizedName().trim().toUpperCase()
+                : (itemDTO.originalName() != null ? itemDTO.originalName().trim().toUpperCase() : "PRODUTO");
 
         return productsMasterRepository.findFirstByNormalizedNameIgnoreCase(normName)
                 .orElseGet(() -> {

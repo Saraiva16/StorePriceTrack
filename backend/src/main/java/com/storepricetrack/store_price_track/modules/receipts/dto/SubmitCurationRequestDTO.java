@@ -1,14 +1,16 @@
 package com.storepricetrack.store_price_track.modules.receipts.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import java.math.BigDecimal;
 import java.util.List;
 
 public record SubmitCurationRequestDTO(
-        String sourceUrl,
-        String accessKey,
-        String marketName,
-        String marketCnpj,
-        String purchaseDate,
-        BigDecimal totalAmount,
-        List<CurationItemDTO> items
+        @JsonAlias({"source_url", "sourceUrl"}) String sourceUrl,
+        @JsonAlias({"access_key", "accessKey"}) String accessKey,
+        @JsonAlias({"market_name", "marketName"}) String marketName,
+        @JsonAlias({"market_cnpj", "marketCnpj", "cnpj"}) String marketCnpj,
+        @JsonAlias({"purchase_date", "purchaseDate"}) String purchaseDate,
+        @JsonAlias({"total_amount", "totalAmount"}) BigDecimal totalAmount,
+        @JsonAlias("items") List<CurationItemDTO> items
 ) {}

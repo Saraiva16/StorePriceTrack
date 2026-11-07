@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, CheckCircle, Store, Calendar, ShieldCheck, Edit3, Loader2 } from 'lucide-react';
 import { submitConfirmedReceipt } from '../services/receiptsService';
 import './ReceiptConfirmation.css';
+
+// Função utilitária para garantir letras sempre maiúsculas em qualquer edição ou exibição de produto
+const formatToUpper = (str) => (str ? String(str).toUpperCase() : '');
 
 export default function ReceiptConfirmation() {
   const location = useLocation();
@@ -12,16 +15,41 @@ export default function ReceiptConfirmation() {
 
   const data = preview || legacyReceipt;
 
-  const initialItems = (data?.items || []).map(it => ({
-    originalName: it.originalName || it.original_name || it.name || '',
-    normalizedName: it.normalizedName || it.name || it.originalName || it.original_name || '',
-    brand: it.brand || '',
-    unitMeasure: it.unitMeasure || it.unit_measure || 'un',
-    quantity: it.quantity ?? 1,
-    unitPrice: it.unitPrice ?? it.unit_price ?? 0,
-    totalPrice: it.totalPrice ?? it.total_price ?? ((it.quantity ?? 1) * (it.unitPrice ?? it.unit_price ?? 0)),
-    category: it.category || 'Outros'
-  }));
+  // Garante o encerramento absoluto de qualquer stream de câmera aberto ao entrar nesta tela
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.__stopAllActiveCameraStreams) {
+      window.__stopAllActiveCameraStreams();
+    }
+  }, []);
+
+  const initialItems = (data?.items || []).map(it => {
+    const originalName = it.original_name || it.originalName || it.name || '';
+    // Prioriza o nome normalizado e converte sempre para letras maiúsculas
+    const rawNormalized = it.normalized_name || it.normalizedName || it.name || originalName;
+    const normalizedName = formatToUpper(rawNormalized);
+    const unitMeasure = it.unit_measure || it.unitMeasure || 'un';
+    const quantity = it.quantity ?? 1;
+    const unitPrice = it.unit_price ?? it.unitPrice ?? 0;
+    const totalPrice = it.total_price ?? it.totalPrice ?? (quantity * unitPrice);
+    const brand = it.brand || '';
+    const category = it.category || 'Outros';
+
+    return {
+      originalName,
+      original_name: originalName,
+      normalizedName,
+      normalized_name: normalizedName,
+      brand,
+      unitMeasure,
+      unit_measure: unitMeasure,
+      quantity,
+      unitPrice,
+      unit_price: unitPrice,
+      totalPrice,
+      total_price: totalPrice,
+      category
+    };
+  });
 
   const [items, setItems] = useState(initialItems);
   const [editingIndex, setEditingIndex] = useState(null);
@@ -60,8 +88,10 @@ export default function ReceiptConfirmation() {
     : 'Data não informada';
 
   const handleItemNameChange = (index, newName) => {
+    const upperName = formatToUpper(newName);
     const updated = [...items];
-    updated[index].normalizedName = newName;
+    updated[index].normalizedName = upperName;
+    updated[index].normalized_name = upperName;
     setItems(updated);
   };
 
@@ -69,15 +99,38 @@ export default function ReceiptConfirmation() {
     setIsSubmitting(true);
     try {
       if (preview) {
-        // Envia para a curadoria em análise com os nomes que o usuário conferiu/ajustou
+        // Envia para a curadoria em análise com os nomes conferidos/ajustados estritamente em maiúsculas
         const payload = {
           sourceUrl,
+          source_url: sourceUrl,
           accessKey,
+          access_key: accessKey,
           marketName,
+          market_name: marketName,
           marketCnpj: cnpj,
+          market_cnpj: cnpj,
           purchaseDate: purchaseDate ? String(purchaseDate) : null,
+          purchase_date: purchaseDate ? String(purchaseDate) : null,
           totalAmount,
-          items
+          total_amount: totalAmount,
+          items: items.map(it => {
+            const finalNorm = formatToUpper(it.normalizedName || it.normalized_name || it.originalName || '');
+            return {
+              original_name: it.originalName || it.original_name,
+              originalName: it.originalName || it.original_name,
+              normalized_name: finalNorm,
+              normalizedName: finalNorm,
+              brand: it.brand || '',
+              unit_measure: it.unitMeasure || it.unit_measure || 'un',
+              unitMeasure: it.unitMeasure || it.unit_measure || 'un',
+              quantity: it.quantity ?? 1,
+              unit_price: it.unitPrice ?? it.unit_price ?? 0,
+              unitPrice: it.unitPrice ?? it.unit_price ?? 0,
+              total_price: it.totalPrice ?? it.total_price ?? 0,
+              totalPrice: it.totalPrice ?? it.total_price ?? 0,
+              category: it.category || 'Outros'
+            };
+          })
         };
         await submitConfirmedReceipt(payload);
         setSuccessMessage('Nota conferida e enviada com sucesso! Em instantes os dados estarão no sistema.');
@@ -144,7 +197,7 @@ export default function ReceiptConfirmation() {
           <div className="items-scroll-list">
             {items.map((item, index) => {
               const isEditing = editingIndex === index;
-              const displayName = item.normalizedName || item.originalName;
+              const displayName = item.normalizedName || item.normalized_name || item.originalName;
 
               return (
                 <div key={index} className="confirmed-item-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
@@ -158,7 +211,14 @@ export default function ReceiptConfirmation() {
                             value={item.normalizedName}
                             onChange={(e) => handleItemNameChange(index, e.target.value)}
                             autoFocus
-                            style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid #4361ee', width: '100%', fontSize: '14px' }}
+                            style={{ 
+                              padding: '6px 10px', 
+                              borderRadius: '8px', 
+                              border: '1px solid #4361ee', 
+                              width: '100%', 
+                              fontSize: '14px',
+                              textTransform: 'uppercase'
+                            }}
                           />
                           <button 
                             type="button" 
@@ -170,7 +230,7 @@ export default function ReceiptConfirmation() {
                         </div>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span className="item-title">{displayName}</span>
+                          <span className="item-title">{formatToUpper(displayName)}</span>
                           <button 
                             type="button" 
                             onClick={() => setEditingIndex(index)}
@@ -182,7 +242,7 @@ export default function ReceiptConfirmation() {
                         </div>
                       )}
                       
-                      {item.originalName && item.originalName !== item.normalizedName && (
+                      {item.originalName && item.originalName !== displayName && (
                         <span style={{ fontSize: '11px', color: '#94a3b8' }}>
                           Nota: {item.originalName}
                         </span>

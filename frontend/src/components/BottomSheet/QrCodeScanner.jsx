@@ -3,6 +3,55 @@ import { BrowserQRCodeReader } from '@zxing/browser';
 import { Camera, AlertCircle, Loader2, RotateCcw } from 'lucide-react';
 import './QrCodeScanner.css';
 
+// Rastreamento e interceptação global de tracks de vídeo para garantir desligamento total do hardware
+if (typeof window !== 'undefined' && !window.__cameraTrackInterceptorInstalled) {
+  window.__cameraTrackInterceptorInstalled = true;
+  window.__activeCameraTracks = window.__activeCameraTracks || new Set();
+
+  if (navigator?.mediaDevices?.getUserMedia) {
+    const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getUserMedia = async function (constraints) {
+      const stream = await originalGetUserMedia(constraints);
+      if (stream && stream.getTracks) {
+        stream.getTracks().forEach(track => {
+          window.__activeCameraTracks.add(track);
+          track.addEventListener('ended', () => {
+            window.__activeCameraTracks.delete(track);
+          });
+        });
+      }
+      return stream;
+    };
+  }
+
+  window.__stopAllActiveCameraStreams = () => {
+    if (window.__activeCameraTracks) {
+      window.__activeCameraTracks.forEach(track => {
+        try {
+          track.stop();
+        } catch (_) {}
+      });
+      window.__activeCameraTracks.clear();
+    }
+    document.querySelectorAll('video').forEach(vid => {
+      try {
+        if (vid.srcObject) {
+          const s = vid.srcObject;
+          if (s.getTracks) {
+            s.getTracks().forEach(t => {
+              try { t.stop(); } catch (_) {}
+            });
+          }
+          vid.srcObject = null;
+        }
+        vid.pause();
+        vid.removeAttribute('src');
+        vid.load();
+      } catch (_) {}
+    });
+  };
+}
+
 export default function QrCodeScanner({ onScanSuccess }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [isStarting, setIsStarting] = useState(true);
@@ -32,15 +81,20 @@ export default function QrCodeScanner({ onScanSuccess }) {
       controlsRef.current = null;
     }
 
-    if (videoRef.current && videoRef.current.srcObject) {
+    if (videoRef.current) {
       try {
-        const stream = videoRef.current.srcObject;
-        if (stream.getTracks) {
-          stream.getTracks().forEach(track => {
-            try { track.stop(); } catch (_) {}
-          });
+        if (videoRef.current.srcObject) {
+          const stream = videoRef.current.srcObject;
+          if (stream.getTracks) {
+            stream.getTracks().forEach(track => {
+              try { track.stop(); } catch (_) {}
+            });
+          }
+          videoRef.current.srcObject = null;
         }
-        videoRef.current.srcObject = null;
+        videoRef.current.pause();
+        videoRef.current.removeAttribute('src');
+        videoRef.current.load();
       } catch (_) {}
     }
 
@@ -51,6 +105,10 @@ export default function QrCodeScanner({ onScanSuccess }) {
         });
       } catch (_) {}
       streamRef.current = null;
+    }
+
+    if (typeof window !== 'undefined' && window.__stopAllActiveCameraStreams) {
+      window.__stopAllActiveCameraStreams();
     }
   };
 

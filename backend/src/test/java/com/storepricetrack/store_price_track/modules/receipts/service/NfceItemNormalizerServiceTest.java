@@ -36,6 +36,30 @@ class NfceItemNormalizerServiceTest {
     }
 
     @Test
+    @DisplayName("Deve normalizar itens de supermercado com pontos colados (ex: WMS / Big / Carrefour)")
+    void testNormalizeItensComPontosColados() {
+        var r1 = normalizerService.normalize("MAC.ARROZ URBANO PARAFUSO", "UN");
+        assertEquals("MACARRAO ARROZ URBANO PARAFUSO", r1.normalizedName());
+        assertEquals("Urbano", r1.brand());
+
+        var r2 = normalizerService.normalize("MAC.ARROZ URBANO PENA", "UN");
+        assertEquals("MACARRAO ARROZ URBANO PENA", r2.normalizedName());
+        assertEquals("Urbano", r2.brand());
+
+        var r3 = normalizerService.normalize("FR.QJO.MUSSARELA AURORA FT", "UN");
+        assertEquals("QUEIJO MUSSARELA AURORA FATIADO", r3.normalizedName());
+        assertEquals("Aurora", r3.brand());
+
+        var r4 = normalizerService.normalize("RF.SORVETE VARIATTA MARACUJA", "UN");
+        assertEquals("SORVETE VARIATTA MARACUJA", r4.normalizedName());
+        assertEquals("Variatta", r4.brand());
+
+        var r5 = normalizerService.normalize("LEITE L.VIDA ITALAC INT Z L CT", "UN");
+        assertEquals("LEITE LONGA VIDA ITALAC INTEGRAL 1L", r5.normalizedName());
+        assertEquals("Italac", r5.brand());
+    }
+
+    @Test
     @DisplayName("Deve expandir REFRIG COCA COLA para REFRIGERANTE COCA COLA e identificar marca")
     void testNormalizeRefrigerante() {
         var result = normalizerService.normalize("REFRIG COCA COLA 2L", "UN");

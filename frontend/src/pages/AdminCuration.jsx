@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, CheckCircle2, XCircle, ExternalLink, RefreshCw, AlertCircle, ArrowLeft, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/Auth/AuthContext';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 import './AdminCuration.css';
 
 export default function AdminCuration() {
@@ -143,7 +144,8 @@ export default function AdminCuration() {
 
   return (
     <div className="curation-page-container">
-      <header className="curation-header">
+      <header className="curation-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <button className="back-btn" onClick={() => navigate('/home')}>
           <ArrowLeft size={20} />
         </button>
@@ -151,6 +153,8 @@ export default function AdminCuration() {
           <h1>Curadoria de Notas Fiscais</h1>
           <p>Validação e higienização antes da entrada no catálogo mestre</p>
         </div>
+      </div>
+        <NotificationBell />
       </header>
 
       {/* Tabs de Status */}
