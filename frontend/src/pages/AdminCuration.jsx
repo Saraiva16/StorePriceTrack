@@ -181,14 +181,22 @@ export default function AdminCuration() {
     }
   };
 
-  const handleItemNameChange = (receiptId, index, newNormalizedName) => {
+  const handleItemFieldChange = (receiptId, index, field, value) => {
     if (!editingReceipt || editingReceipt.id !== receiptId) return;
     const updatedItems = [...editingReceipt.items];
-    updatedItems[index] = {
-      ...updatedItems[index],
-      normalizedName: newNormalizedName,
-      normalized_name: newNormalizedName
-    };
+    const targetItem = { ...updatedItems[index] };
+
+    if (field === 'normalizedName') {
+      targetItem.normalizedName = value;
+      targetItem.normalized_name = value;
+    } else if (field === 'brand') {
+      targetItem.brand = value;
+    } else if (field === 'unitMeasure') {
+      targetItem.unitMeasure = value;
+      targetItem.unit_measure = value;
+    }
+
+    updatedItems[index] = targetItem;
     setEditingReceipt({ ...editingReceipt, items: updatedItems });
   };
 
@@ -200,8 +208,9 @@ export default function AdminCuration() {
       original_name: it.originalName || it.original_name || '',
       normalizedName: it.normalizedName || it.normalized_name || it.originalName || it.original_name || '',
       normalized_name: it.normalizedName || it.normalized_name || it.originalName || it.original_name || '',
-      unitMeasure: it.unitMeasure || it.unit_measure || 'un',
-      unit_measure: it.unitMeasure || it.unit_measure || 'un'
+      brand: it.brand || '',
+      unitMeasure: (it.unitMeasure || it.unit_measure || 'un').toLowerCase(),
+      unit_measure: (it.unitMeasure || it.unit_measure || 'un').toLowerCase()
     }));
     setEditingReceipt(cloned);
   };
@@ -334,6 +343,7 @@ export default function AdminCuration() {
                       {currentReceipt.items?.map((item, idx) => {
                         const origName = item.originalName || item.original_name || '-';
                         const normName = item.normalizedName || item.normalized_name || origName;
+                        const brand = item.brand || '';
                         const unit = (item.unitMeasure || item.unit_measure || 'un').toLowerCase();
 
                         return (
@@ -345,14 +355,46 @@ export default function AdminCuration() {
                                   type="text"
                                   className="item-name-edit-input"
                                   value={item.normalizedName || item.normalized_name || ''}
-                                  onChange={(e) => handleItemNameChange(receipt.id, idx, e.target.value)}
+                                  placeholder="Nome padronizado do produto"
+                                  onChange={(e) => handleItemFieldChange(receipt.id, idx, 'normalizedName', e.target.value)}
                                 />
                               ) : (
                                 <strong>{normName}</strong>
                               )}
                             </td>
-                            <td>{item.brand || '-'}</td>
-                            <td><span className="badge-unit">{unit}</span></td>
+                            <td>
+                              {isEditing ? (
+                                <input 
+                                  type="text"
+                                  className="item-brand-edit-input"
+                                  value={brand}
+                                  placeholder="Marca (ex: Seara)"
+                                  onChange={(e) => handleItemFieldChange(receipt.id, idx, 'brand', e.target.value)}
+                                />
+                              ) : (
+                                <span>{brand || '-'}</span>
+                              )}
+                            </td>
+                            <td>
+                              {isEditing ? (
+                                <select
+                                  className="item-unit-edit-select"
+                                  value={unit}
+                                  onChange={(e) => handleItemFieldChange(receipt.id, idx, 'unitMeasure', e.target.value)}
+                                >
+                                  <option value="un">UN</option>
+                                  <option value="kg">KG</option>
+                                  <option value="g">G</option>
+                                  <option value="l">L</option>
+                                  <option value="ml">ML</option>
+                                  <option value="cx">CX</option>
+                                  <option value="pct">PCT</option>
+                                  <option value="dz">DZ</option>
+                                </select>
+                              ) : (
+                                <span className="badge-unit">{unit}</span>
+                              )}
+                            </td>
                             <td>{formatQuantity(item.quantity, unit)}</td>
                             <td>R$ {formatItemTotal(item)}</td>
                           </tr>
@@ -370,7 +412,7 @@ export default function AdminCuration() {
                         className="btn-edit-curation"
                         onClick={() => handleStartEditing(receipt)}
                       >
-                        Ajustar Nomes
+                        Ajustar Nomes, Marca e Unidade
                       </button>
                     ) : (
                       <button 

@@ -87,6 +87,58 @@ describe('AdminCuration Rendering & Data Mapping', () => {
     expect(screen.getByText('R$ 10,98')).toBeInTheDocument();
   });
 
+  it('deve permitir editar nome, marca e unidade de medida no modo de edição', async () => {
+    const mockReceipt = {
+      id: 102,
+      market_name: 'Supermercado Teste',
+      purchase_date: '2026-11-07T18:30:00',
+      total_amount: 10.00,
+      items: [
+        {
+          original_name: 'PROD TESTE',
+          normalized_name: 'PRODUTO TESTE',
+          brand: '',
+          unit_measure: 'un',
+          quantity: 1,
+          unit_price: 10.00,
+          total_price: 10.00
+        }
+      ]
+    };
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ content: [mockReceipt] })
+    });
+
+    render(
+      <ThemeProvider>
+        <BrowserRouter>
+          <AdminCuration />
+        </BrowserRouter>
+      </ThemeProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('PRODUTO TESTE')).toBeInTheDocument();
+    });
+
+    // Clica no botão de edição
+    const editBtn = screen.getByText('Ajustar Nomes, Marca e Unidade');
+    fireEvent.click(editBtn);
+
+    // Inputs devem estar no documento
+    const brandInput = screen.getByPlaceholderText('Marca (ex: Seara)');
+    expect(brandInput).toBeInTheDocument();
+    fireEvent.change(brandInput, { target: { value: 'Marca Nova' } });
+    expect(brandInput.value).toBe('Marca Nova');
+
+    const unitSelect = screen.getByRole('combobox');
+    expect(unitSelect).toBeInTheDocument();
+    fireEvent.change(unitSelect, { target: { value: 'kg' } });
+    expect(unitSelect.value).toBe('kg');
+  });
+
   it('deve renderizar o botão de alternância de tema e permitir alternar entre claro e escuro', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
