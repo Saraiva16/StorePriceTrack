@@ -1,6 +1,11 @@
 import react from '@vitejs/plugin-react'
-import basicSsl from '@vitejs/plugin-basic-ssl'
 import { defineConfig } from 'vite'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const buildTimestamp = Date.now();
 
@@ -22,14 +27,23 @@ const versionPlugin = () => ({
   }
 });
 
-// https://vite.dev/config/
+// Configuração SSL segura e confiável via mkcert
+const certPath = path.resolve(__dirname, 'localhost+3.pem')
+const keyPath = path.resolve(__dirname, 'localhost+3-key.pem')
+const hasCustomCerts = fs.existsSync(certPath) && fs.existsSync(keyPath)
+
 export default defineConfig({
-  plugins: [react(), basicSsl(), versionPlugin()],
+  plugins: [react(), versionPlugin()],
   define: {
     __APP_BUILD_TIME__: JSON.stringify(buildTimestamp)
   },
   server: {
-    https: true,
+    https: hasCustomCerts
+      ? {
+          key: fs.readFileSync(keyPath),
+          cert: fs.readFileSync(certPath)
+        }
+      : true,
     host: true,
     port: 5173,
     allowedHosts: true,
