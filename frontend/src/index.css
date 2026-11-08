@@ -1,19 +1,66 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
 
 :root {
+  /* Tema Claro (Padrão) */
   --bg-color: #f7f3ec;
-  --text-dark: #3a3b37;
+  --surface-card: #ffffff;
+  --surface-subtle: #f8fafc;
+  --surface-hover: #f1f5f9;
+  --border-color: #e2e8f0;
+  
+  --text-dark: #2c3338;
+  --text-muted: #64748b;
   --text-light: #ffffff;
   
   --card-primary-bg: #89b4b1;
   --card-secondary-bg: #e1e3dd;
   
   --accent-color: #f59c8d;
+  --accent-color-hover: #e78979;
   --icon-color: #89b4b1;
+  
+  --success-color: #16a34a;
+  --danger-color: #dc2626;
+  --warning-color: #f59e0b;
+  --info-color: #2563eb;
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
   
   --border-radius-lg: 24px;
   --border-radius-md: 16px;
   --border-radius-pill: 50px;
+}
+
+/* Modo Escuro (Dark Theme) */
+[data-theme="dark"],
+body.dark-theme {
+  --bg-color: #0f172a;
+  --surface-card: #1e293b;
+  --surface-subtle: #162032;
+  --surface-hover: #273549;
+  --border-color: #334155;
+  
+  --text-dark: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-light: #ffffff;
+  
+  --card-primary-bg: #2d4a52;
+  --card-secondary-bg: #273549;
+  
+  --accent-color: #fb7185;
+  --accent-color-hover: #f43f5e;
+  --icon-color: #6ee7b7;
+  
+  --success-color: #22c55e;
+  --danger-color: #ef4444;
+  --warning-color: #fbbf24;
+  --info-color: #38bdf8;
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
 }
 
 * {
@@ -48,6 +95,7 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 #root {
@@ -58,6 +106,7 @@ body {
   background-color: var(--bg-color);
   display: flex;
   flex-direction: column;
+  transition: background-color 0.25s ease;
 }
 
 .app-layout {
@@ -85,23 +134,29 @@ body {
   flex-direction: column;
 }
 
-/* Modo Desktop / Telas Maiores: Centraliza a experiência simulando tela de smartphone */
-@media (min-width: 600px) {
-  body {
-    background-color: #1a1a1a;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px 0;
+/* Layout Responsivo para Desktop, Tablets e Smartphones */
+@media (min-width: 768px) {
+  .page-container {
+    max-width: 720px;
   }
 
-  #root {
-    max-width: 440px;
-    height: 94dvh;
-    min-height: 700px;
-    border-radius: 28px;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
-    overflow: hidden;
+  .curation-page-container {
+    max-width: 1400px;
+  }
+
+  .cart-page-container {
+    max-width: 1100px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .page-container {
+    max-width: 860px;
+  }
+
+  .curation-page-container {
+    max-width: 95%;
+    max-width: 1650px;
   }
 }
 

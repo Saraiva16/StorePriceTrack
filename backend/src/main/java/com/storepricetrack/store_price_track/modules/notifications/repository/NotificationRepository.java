@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface NotificationRepository extends JpaRepository<NotificationEntity, Long> {
 
@@ -21,4 +23,12 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
     @Modifying
     @Query("UPDATE NotificationEntity n SET n.read = true WHERE (n.user.id = :userId OR n.user IS NULL) AND n.read = false")
     int markAllAsReadByUserId(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("UPDATE NotificationEntity n SET n.read = true WHERE n.type = :type AND n.referenceId = :referenceId AND n.read = false")
+    int markAsReadByTypeAndReferenceId(@Param("type") String type, @Param("referenceId") Long referenceId);
+
+    @Modifying
+    @Query("UPDATE NotificationEntity n SET n.read = true WHERE n.type = :type AND n.referenceId IN :referenceIds AND n.read = false")
+    int markAsReadByTypeAndReferenceIds(@Param("type") String type, @Param("referenceIds") List<Long> referenceIds);
 }
