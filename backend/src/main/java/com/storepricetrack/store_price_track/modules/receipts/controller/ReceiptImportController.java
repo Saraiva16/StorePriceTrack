@@ -6,6 +6,12 @@ import com.storepricetrack.store_price_track.modules.receipts.dto.NfceImportResp
 import com.storepricetrack.store_price_track.modules.receipts.dto.ReceiptResponseDTO;
 import com.storepricetrack.store_price_track.modules.receipts.exception.DuplicateReceiptException;
 import com.storepricetrack.store_price_track.modules.receipts.service.IReceiptImportService;
+import com.storepricetrack.store_price_track.modules.auth.entity.User;
+import com.storepricetrack.store_price_track.modules.receipts.dto.SubmitCurationRequestDTO;
+import com.storepricetrack.store_price_track.modules.receipts.dto.ReceiptCurationResponseDTO;
+import com.storepricetrack.store_price_track.modules.receipts.entity.ReceiptCurationEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -29,6 +35,7 @@ public class ReceiptImportController {
     private static final Logger log = LoggerFactory.getLogger(ReceiptImportController.class);
 
     private final IReceiptImportService receiptImportService;
+    private final com.storepricetrack.store_price_track.modules.receipts.service.ReceiptCurationService curationService;
 
     @Operation(summary = "Importa um recibo a partir de uma foto",
             description = "Envia a imagem para o Gemini extrair os dados estruturados, faz find-or-create do "
@@ -51,6 +58,18 @@ public class ReceiptImportController {
         HttpStatus status = response.queued() ? HttpStatus.ACCEPTED : HttpStatus.CREATED;
         return ResponseEntity.status(status).body(response);
     }
+
+    @Operation(summary = "Submete recibo conferido pelo usuário para a fila de curadoria",
+            description = "Recebe a lista de itens revisados pelo usuário para validação e envio à fila de moderação.")
+    @PostMapping("/curation/submit-confirmed")
+    public ResponseEntity<ReceiptCurationResponseDTO> submitConfirmed(
+            @Valid @RequestBody SubmitCurationRequestDTO request,
+            @AuthenticationPrincipal User user) {
+        log.info("POST /api/receipts/curation/submit-confirmed - accessKey: {}", request.accessKey());
+        ReceiptCurationEntity entity = curationService.submitUserConfirmedToCuration(request, user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(curationService.toResponseDTO(entity));
+    }
+
 
     @ExceptionHandler(DuplicateReceiptException.class)
     public ResponseEntity<Map<String, String>> handleDuplicate(DuplicateReceiptException ex) {

@@ -1,5 +1,5 @@
-.bottom-sheet-overlay {
-  position: absolute;
+﻿.bottom-sheet-overlay {
+  position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.5);
   z-index: 1000;
@@ -7,16 +7,17 @@
 }
 
 .bottom-sheet {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   background: var(--bg-color, #f4f6f8);
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
-  padding: 24px;
+  padding: 20px 20px 24px 20px;
   z-index: 1001;
-  max-height: 80vh;
+  max-height: 85vh;
+  max-height: 85dvh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -345,4 +346,37 @@
   padding: 24px 16px;
   color: #666;
   font-size: 14px;
+}
+
+
+/* Wrapper and Toggle Button for Custom Product */
+.sheet-custom-wrapper {
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.btn-toggle-custom-product {
+  width: 100%;
+  background: #f8fafc;
+  border: 1px dashed #94a3b8;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-toggle-custom-product:hover {
+  background: #f1f5f9;
+  border-color: var(--accent-color, #4361ee);
+  color: var(--accent-color, #4361ee);
+}
+
+.btn-toggle-custom-product strong {
+  color: var(--accent-color, #4361ee);
 }

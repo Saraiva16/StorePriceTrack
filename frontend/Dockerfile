@@ -1,5 +1,5 @@
 # Estágio 1: Build (Node)
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 # Instala as dependências de forma limpa
 COPY package*.json ./

@@ -37,7 +37,13 @@ export default function ImportReceipt() {
     try {
       const response = await importNfceUrl(cleanUrl);
 
-      if (response.queued) {
+      if (response.preview) {
+        navigate('/receipt-confirmation', {
+          state: { preview: response.preview }
+        });
+      } else if (response.receipt) {
+        handleNfceSuccess(response.receipt);
+      } else if (response.queued) {
         setInfoMessage(
           response.message || 
           'Nota fiscal recebida! O estado desta nota está sendo integrado ao sistema e em breve estará alocada.'
@@ -45,8 +51,6 @@ export default function ImportReceipt() {
         setTimeout(() => {
           navigate('/home');
         }, 4000);
-      } else if (response.receipt) {
-        handleNfceSuccess(response.receipt);
       } else {
         alert('Nota fiscal processada com sucesso!');
         navigate('/home');

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Receipt, PiggyBank, Pencil, User, Check, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, Receipt, PiggyBank, Pencil, User, Check, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/Auth/AuthContext';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 import './Home.css';
 
 const DEFAULT_CARDS_VISIBILITY = {
@@ -31,6 +32,12 @@ export default function Home() {
     }
     return DEFAULT_CARDS_VISIBILITY;
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.__stopAllActiveCameraStreams) {
+      window.__stopAllActiveCameraStreams();
+    }
+  }, []);
 
   useEffect(() => {
     try {
@@ -85,6 +92,7 @@ export default function Home() {
           <span className="greeting-text">Olá, <strong>{getFirstName()}</strong></span>
         </div>
         <div className="home-header-actions">
+          <NotificationBell />
           <button
             type="button"
             className={`header-action-btn ${isEditing ? 'active' : ''}`}
