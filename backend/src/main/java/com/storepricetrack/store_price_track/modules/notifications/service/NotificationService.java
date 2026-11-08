@@ -97,6 +97,64 @@ public class NotificationService {
     }
 
     /**
+     * Marca automaticamente como resolvidas/lidas as notificações de pendência de curadoria
+     * quando a nota é aprovada ou rejeitada pelo administrador.
+     */
+    @Transactional
+    public void resolveCurationNotifications(Long curationId) {
+        if (curationId == null) return;
+        try {
+            int updated = notificationRepository.markAsReadByTypeAndReferenceId("RECEIPT_CURATION_PENDING", curationId);
+            log.info("Resolved and marked {} pending curation notification(s) as read for receipt ID {}", updated, curationId);
+        } catch (Exception e) {
+            log.warn("Failed to resolve curation notifications for ID {}: {}", curationId, e.getMessage());
+        }
+    }
+
+    /**
+     * Marca como resolvidas/lidas as notificações em lote quando as notas são publicadas no sistema.
+     */
+    @Transactional
+    public void resolveCurationNotificationsBatch(List<Long> curationIds) {
+        if (curationIds == null || curationIds.isEmpty()) return;
+        try {
+            int updated = notificationRepository.markAsReadByTypeAndReferenceIds("RECEIPT_CURATION_PENDING", curationIds);
+            log.info("Resolved and marked {} pending curation notification(s) as read in batch for {} receipts", updated, curationIds.size());
+        } catch (Exception e) {
+            log.warn("Failed to resolve curation notifications in batch: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Notifica o usuário remetente de que sua nota foi validada e ativada no sistema.
+     */
+    @Async
+    @Transactional
+    public void notifyUserReceiptActivated(User user, String marketName, Long receiptId) {
+        if (user == null) return;
+        try {
+            String mkt = (marketName != null && !marketName.isBlank()) ? marketName : "Supermercado";
+            String title = "Nota Fiscal Confirmada";
+            String msg = String.format("Sua compra no %s foi validada e consolidada com sucesso no seu histórico!", mkt);
+            String type = "RECEIPT_ACTIVATED";
+
+            NotificationEntity notif = NotificationEntity.builder()
+                    .user(user)
+                    .title(title)
+                    .message(msg)
+                    .type(type)
+                    .referenceId(receiptId)
+                    .read(false)
+                    .build();
+            notificationRepository.save(notif);
+
+            sendPushToUser(user, title, msg, "/home", type, receiptId);
+        } catch (Exception e) {
+            log.warn("Failed to notify user {} of receipt activation: {}", user.getUsername(), e.getMessage());
+        }
+    }
+
+    /**
      * Envia Web Push para os navegadores/dispositivos registrados do usuário.
      */
     public void sendPushToUser(User user, String title, String body, String url, String type, Long refId) {
