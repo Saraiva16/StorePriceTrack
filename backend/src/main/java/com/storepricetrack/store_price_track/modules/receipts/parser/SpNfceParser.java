@@ -29,7 +29,7 @@ public class SpNfceParser implements INfceParser {
             + "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
 
     private static final Pattern CNPJ_PATTERN = Pattern.compile("(\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2})");
-    private static final Pattern NUMERIC_PATTERN = Pattern.compile("([0-9]+[\\.,]?[0-9]*)");
+    private static final Pattern NUMERIC_PATTERN = Pattern.compile("([0-9]+(?:[\\.,][0-9]+)*)");
     private static final Pattern EMISSION_DATE_PATTERN = Pattern.compile("(\\d{2}/\\d{2}/\\d{4}\\s+\\d{2}:\\d{2}:\\d{2})");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
@@ -115,6 +115,15 @@ public class SpNfceParser implements INfceParser {
                 qty = parseBigDecimal(qtyEl.text());
             }
 
+            String unitMeasure = "un";
+            Element unitEl = row.selectFirst(".RUN");
+            if (unitEl != null) {
+                String uText = unitEl.text().replaceAll("(?i)UN\\s*:\\s*", "").trim().toLowerCase();
+                if (!uText.isBlank()) {
+                    unitMeasure = uText;
+                }
+            }
+
             BigDecimal unitPrice = BigDecimal.ZERO;
             Element unitPriceEl = row.selectFirst(".RvlUnit");
             if (unitPriceEl != null) {
@@ -130,7 +139,7 @@ public class SpNfceParser implements INfceParser {
             }
 
             if (!itemName.isBlank()) {
-                items.add(new ReceiptExtractionItem(itemName, null, qty, unitPrice, totalPrice));
+                items.add(new ReceiptExtractionItem(itemName, null, unitMeasure, qty, unitPrice, totalPrice));
             }
         }
 
@@ -197,14 +206,17 @@ public class SpNfceParser implements INfceParser {
 
     private BigDecimal parseBigDecimal(String raw) {
         if (raw == null || raw.isBlank()) return BigDecimal.ZERO;
-        Matcher m = NUMERIC_PATTERN.matcher(raw.replace(".", "").replace(",", "."));
+        Matcher m = NUMERIC_PATTERN.matcher(raw);
         if (m.find()) {
             try {
-                return new BigDecimal(m.group(1));
+                String numStr = m.group(1);
+                if (numStr.contains(",")) {
+                    numStr = numStr.replace(".", "").replace(",", ".");
+                }
+                return new BigDecimal(numStr);
             } catch (Exception ignored) {
             }
         }
         return BigDecimal.ZERO;
     }
 }
-

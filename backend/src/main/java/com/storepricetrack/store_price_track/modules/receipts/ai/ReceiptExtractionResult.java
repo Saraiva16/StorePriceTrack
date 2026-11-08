@@ -17,9 +17,13 @@ public record ReceiptExtractionResult(
     public record ReceiptExtractionItem(
             String name,
             String category,
+            String unitMeasure,
             BigDecimal quantity,
             BigDecimal unitPrice,
             BigDecimal totalPrice
     ) {
+        public ReceiptExtractionItem(String name, String category, BigDecimal quantity, BigDecimal unitPrice, BigDecimal totalPrice) {
+            this(name, category, null, quantity, unitPrice, totalPrice);
+        }
     }
 }

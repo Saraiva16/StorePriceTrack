@@ -203,7 +203,9 @@ public class ReceiptCurationService {
 
             String normalizedName;
             String brand = "";
-            String unitMeasure = "un";
+            String unitMeasure = item.unitMeasure() != null && !item.unitMeasure().isBlank()
+                    ? item.unitMeasure().toLowerCase()
+                    : "un";
             String category = item.category();
 
             if (!key.isEmpty() && historicalMemoryMap.containsKey(key)) {
@@ -327,7 +329,7 @@ public class ReceiptCurationService {
         // 2. Cria Recibo Oficial
         ReceiptsEntity receipt = new ReceiptsEntity();
         receipt.setMarket(market);
-                receipt.setPurchaseDate(curation.getPurchaseDate() != null ? curation.getPurchaseDate() : LocalDateTime.now());
+        receipt.setPurchaseDate(curation.getPurchaseDate() != null ? curation.getPurchaseDate() : LocalDateTime.now());
         receipt.setTotalAmount(curation.getTotalAmount());
         receipt.setAccessKey(curation.getAccessKey());
         ReceiptsEntity savedReceipt = receiptsRepository.save(receipt);

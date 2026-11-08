@@ -12,9 +12,13 @@ import {
   AlertCircle,
   CreditCard,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  Sun,
+  Moon,
+  Palette
 } from 'lucide-react';
 import { useAuth } from '../components/Auth/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { 
   fetchUserProfile, 
   updateUserProfile, 
@@ -25,6 +29,7 @@ import './Profile.css';
 export default function Profile() {
   const navigate = useNavigate();
   const { user, logout, updatePixKey } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
 
   // Estados dos Dados Cadastrais
   const [username, setUsername] = useState(user?.username || '');
@@ -198,50 +203,49 @@ export default function Profile() {
         </div>
 
         {profileSuccess && (
-          <div className="profile-feedback-banner success animate-slide-up">
-            <Check size={18} />
+          <div className="profile-feedback-banner success">
+            <Check size={16} />
             <span>{profileSuccess}</span>
           </div>
         )}
 
         {profileError && (
-          <div className="profile-feedback-banner error animate-slide-up">
-            <AlertCircle size={18} />
+          <div className="profile-feedback-banner error">
+            <AlertCircle size={16} />
             <span>{profileError}</span>
           </div>
         )}
 
         <form onSubmit={handleSaveProfile} className="profile-form">
           <div className="profile-form-group">
-            <label htmlFor="input-username">Nome / Usuário</label>
+            <label htmlFor="input-username">Nome de Usuário</label>
             <input 
               id="input-username"
               type="text"
               className="profile-input"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ex: Mateus Saraiva Silva"
+              placeholder="Seu nome no sistema"
               required
             />
           </div>
 
           <div className="profile-form-group">
             <label htmlFor="input-pix">
-              <span>Chave Pix</span>
-              <span className="profile-label-hint">Usada para receber rateios nas viagens</span>
+              <CreditCard size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+              Chave Pix (opcional)
             </label>
-            <div className="profile-input-with-icon">
-              <CreditCard size={18} className="profile-input-adornment" />
-              <input 
-                id="input-pix"
-                type="text"
-                className="profile-input"
-                style={{ paddingLeft: 42 }}
-                value={pixKey}
-                onChange={(e) => setPixKey(e.target.value)}
-                placeholder="Ex: CPF, Telefone, E-mail ou Chave Aleatória"
-              />
-            </div>
+            <input 
+              id="input-pix"
+              type="text"
+              className="profile-input"
+              value={pixKey}
+              onChange={(e) => setPixKey(e.target.value)}
+              placeholder="CPF, E-mail, Celular ou Chave Aleatória"
+            />
+            <span className="profile-input-hint">
+              Utilizada para outros participantes pagarem você em rateios de viagens.
+            </span>
           </div>
 
           <button 
@@ -255,28 +259,28 @@ export default function Profile() {
         </form>
       </section>
 
-      {/* Card 2: Alteração de Senha */}
+      {/* Card 2: Segurança e Senha */}
       <section className="profile-card">
         <div className="profile-card-header">
-          <div className="profile-card-icon-box" style={{ background: '#fce4de' }}>
-            <Lock size={20} color="#e07a5f" />
+          <div className="profile-card-icon-box">
+            <Lock size={20} color="#e76f51" />
           </div>
           <div>
             <h3>Segurança e Senha</h3>
-            <p>Altere sua senha de acesso ao sistema</p>
+            <p>Atualize sua senha de acesso</p>
           </div>
         </div>
 
         {passwordSuccess && (
-          <div className="profile-feedback-banner success animate-slide-up">
-            <Check size={18} />
+          <div className="profile-feedback-banner success">
+            <Check size={16} />
             <span>{passwordSuccess}</span>
           </div>
         )}
 
         {passwordError && (
-          <div className="profile-feedback-banner error animate-slide-up">
-            <AlertCircle size={18} />
+          <div className="profile-feedback-banner error">
+            <AlertCircle size={16} />
             <span>{passwordError}</span>
           </div>
         )}
@@ -284,10 +288,10 @@ export default function Profile() {
         <form onSubmit={handleChangePassword} className="profile-form">
           <div className="profile-form-group">
             <label htmlFor="input-current-pass">Senha Atual</label>
-            <div className="profile-password-wrapper">
+            <div className="profile-input-wrapper">
               <input 
                 id="input-current-pass"
-                type={showCurrentPassword ? 'text' : 'password'}
+                type={showCurrentPassword ? "text" : "password"}
                 className="profile-input"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
@@ -298,7 +302,7 @@ export default function Profile() {
                 type="button" 
                 className="profile-eye-btn"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                tabIndex={-1}
+                tabIndex="-1"
               >
                 {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -307,10 +311,10 @@ export default function Profile() {
 
           <div className="profile-form-group">
             <label htmlFor="input-new-pass">Nova Senha</label>
-            <div className="profile-password-wrapper">
+            <div className="profile-input-wrapper">
               <input 
                 id="input-new-pass"
-                type={showNewPassword ? 'text' : 'password'}
+                type={showNewPassword ? "text" : "password"}
                 className="profile-input"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -321,7 +325,7 @@ export default function Profile() {
                 type="button" 
                 className="profile-eye-btn"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                tabIndex={-1}
+                tabIndex="-1"
               >
                 {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -352,12 +356,40 @@ export default function Profile() {
         </form>
       </section>
 
-      {/* Card 3: Versão do Aplicativo */}
+      {/* Card 3: Aparência / Modo Escuro */}
+      <section className="profile-card theme-card">
+        <div className="profile-theme-content">
+          <div className="profile-theme-info">
+            <div className="profile-card-icon-box" style={{ background: isDark ? 'rgba(251, 191, 36, 0.15)' : 'rgba(245, 158, 11, 0.15)' }}>
+              {isDark ? <Moon size={20} color="#fbbf24" /> : <Sun size={20} color="#f59e0b" />}
+            </div>
+            <div>
+              <h4 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-dark)' }}>
+                Modo Escuro
+              </h4>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                {isDark ? 'Tema escuro ativo para visualização noturna' : 'Tema claro ativo no sistema'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className={`profile-switch-toggle ${isDark ? 'active' : ''}`}
+            onClick={toggleTheme}
+            aria-label="Alternar modo escuro"
+            title={isDark ? 'Alternar para tema claro' : 'Alternar para tema escuro'}
+          >
+            <span className="profile-switch-handle" />
+          </button>
+        </div>
+      </section>
+
+      {/* Card 4: Versão do Aplicativo */}
       <section className="profile-card version-card">
         <div className="profile-version-content">
           <div>
             <h4 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-dark)' }}>Versão do Sistema</h4>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
               {typeof __APP_BUILD_TIME__ !== 'undefined'
                 ? `Build: ${new Date(Number(__APP_BUILD_TIME__)).toLocaleString('pt-BR')}`
                 : 'Ambiente de desenvolvimento'}
@@ -375,12 +407,12 @@ export default function Profile() {
         </div>
       </section>
 
-      {/* Card 4: Encerrar Sessão */}
+      {/* Card 5: Encerrar Sessão */}
       <section className="profile-card logout-card">
         <div className="profile-logout-content">
           <div>
             <h4 style={{ margin: '0 0 4px', fontSize: '1rem', color: '#c53030' }}>Sair da Conta</h4>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-light)' }}>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
               Encerra a sessão atual e volta para o login.
             </p>
           </div>

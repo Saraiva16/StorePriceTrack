@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, CheckCircle2, XCircle, ExternalLink, RefreshCw, AlertCircle, ArrowLeft, Layers } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, XCircle, ExternalLink, RefreshCw, AlertCircle, ArrowLeft, Layers, Sun, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/Auth/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import NotificationBell from '../components/NotificationBell/NotificationBell';
 import './AdminCuration.css';
 
 export default function AdminCuration() {
   const { user } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [curationList, setCurationList] = useState([]);
   const [activeTab, setActiveTab] = useState('EM_ANALISE'); // 'EM_ANALISE' | 'APROVADA' | 'ATIVA' | 'REJEITADA'
@@ -49,14 +51,61 @@ export default function AdminCuration() {
     }
   };
 
+  const formatQuantity = (quantity, unit) => {
+    const num = Number(quantity);
+    if (isNaN(num)) return '1';
+    const u = (unit || '').toLowerCase();
+    if (u === 'kg' || num % 1 !== 0) {
+      return num.toLocaleString('pt-BR', { minimumFractionDigits: num % 1 !== 0 ? 2 : 0, maximumFractionDigits: 3 });
+    }
+    return num.toString();
+  };
+
+  const formatItemTotal = (item) => {
+    const tp = item.totalPrice ?? item.total_price;
+    if (tp != null && !isNaN(Number(tp))) {
+      return Number(tp).toFixed(2).replace('.', ',');
+    }
+    const up = item.unitPrice ?? item.unit_price;
+    const q = item.quantity ?? 1;
+    if (up != null && !isNaN(Number(up))) {
+      return (Number(q) * Number(up)).toFixed(2).replace('.', ',');
+    }
+    return '0,00';
+  };
+
+  const formatReceiptTotal = (receipt) => {
+    const total = receipt.totalAmount ?? receipt.total_amount;
+    if (total != null && !isNaN(Number(total))) {
+      return Number(total).toFixed(2).replace('.', ',');
+    }
+    return '0,00';
+  };
+
   const handleApprove = async (receipt) => {
     setProcessingId(receipt.id);
     try {
       const token = localStorage.getItem('token');
       const payload = {
-        marketName: receipt.marketName,
-        totalAmount: receipt.totalAmount,
-        items: receipt.items
+        marketName: receipt.marketName || receipt.market_name,
+        market_name: receipt.marketName || receipt.market_name,
+        totalAmount: receipt.totalAmount ?? receipt.total_amount,
+        total_amount: receipt.totalAmount ?? receipt.total_amount,
+        items: (receipt.items || []).map(it => ({
+          originalName: it.originalName || it.original_name,
+          original_name: it.originalName || it.original_name,
+          normalizedName: it.normalizedName || it.normalized_name,
+          normalized_name: it.normalizedName || it.normalized_name,
+          brand: it.brand || '',
+          unitMeasure: it.unitMeasure || it.unit_measure || 'un',
+          unit_measure: it.unitMeasure || it.unit_measure || 'un',
+          quantity: it.quantity ?? 1,
+          unitPrice: it.unitPrice ?? it.unit_price ?? 0,
+          unit_price: it.unitPrice ?? it.unit_price ?? 0,
+          totalPrice: it.totalPrice ?? it.total_price ?? 0,
+          total_price: it.totalPrice ?? it.total_price ?? 0,
+          category: it.category || 'Outros'
+        }))
       };
       const res = await fetch(`/api/admin/receipt-curation/${receipt.id}/approve`, {
         method: 'PUT',
@@ -137,24 +186,49 @@ export default function AdminCuration() {
     const updatedItems = [...editingReceipt.items];
     updatedItems[index] = {
       ...updatedItems[index],
-      normalizedName: newNormalizedName
+      normalizedName: newNormalizedName,
+      normalized_name: newNormalizedName
     };
     setEditingReceipt({ ...editingReceipt, items: updatedItems });
   };
 
+  const handleStartEditing = (receipt) => {
+    const cloned = JSON.parse(JSON.stringify(receipt));
+    cloned.items = (cloned.items || []).map(it => ({
+      ...it,
+      originalName: it.originalName || it.original_name || '',
+      original_name: it.originalName || it.original_name || '',
+      normalizedName: it.normalizedName || it.normalized_name || it.originalName || it.original_name || '',
+      normalized_name: it.normalizedName || it.normalized_name || it.originalName || it.original_name || '',
+      unitMeasure: it.unitMeasure || it.unit_measure || 'un',
+      unit_measure: it.unitMeasure || it.unit_measure || 'un'
+    }));
+    setEditingReceipt(cloned);
+  };
+
   return (
     <div className="curation-page-container">
-      <header className="curation-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <button className="back-btn" onClick={() => navigate('/home')}>
-          <ArrowLeft size={20} />
-        </button>
-        <div className="curation-title-group">
-          <h1>Curadoria de Notas Fiscais</h1>
-          <p>Validação e higienização antes da entrada no catálogo mestre</p>
+      <header className="curation-header">
+        <div className="curation-header-left">
+          <button className="back-btn" onClick={() => navigate('/home')} title="Voltar para Home">
+            <ArrowLeft size={22} />
+          </button>
+          <div className="curation-title-group">
+            <h1>Curadoria de Notas Fiscais</h1>
+            <p>Validação e higienização antes da entrada no catálogo mestre</p>
+          </div>
         </div>
-      </div>
-        <NotificationBell />
+        <div className="curation-header-right">
+          <button 
+            className="theme-toggle-btn" 
+            onClick={toggleTheme} 
+            title={isDark ? 'Ativar Modo Claro' : 'Ativar Modo Escuro'}
+            aria-label="Alternar tema"
+          >
+            {isDark ? <Sun size={20} color="#fbbf24" /> : <Moon size={20} />}
+          </button>
+          <NotificationBell />
+        </div>
       </header>
 
       {/* Tabs de Status */}
@@ -216,31 +290,34 @@ export default function AdminCuration() {
           {curationList.map(receipt => {
             const isEditing = editingReceipt?.id === receipt.id;
             const currentReceipt = isEditing ? editingReceipt : receipt;
+            const marketName = currentReceipt.marketName || currentReceipt.market_name || 'Supermercado';
+            const purchaseDate = currentReceipt.purchaseDate || currentReceipt.purchase_date;
+            const sourceUrl = currentReceipt.sourceUrl || currentReceipt.source_url;
 
             return (
               <div key={receipt.id} className="curation-card">
                 <div className="curation-card-top">
                   <div className="curation-market-info">
-                    <h3>{currentReceipt.marketName || 'Supermercado'}</h3>
+                    <h3>{marketName}</h3>
                     <span className="curation-date">
-                      {currentReceipt.purchaseDate ? new Date(currentReceipt.purchaseDate).toLocaleString('pt-BR') : 'Data não informada'}
+                      {purchaseDate ? new Date(purchaseDate).toLocaleString('pt-BR') : 'Data não informada'}
                     </span>
                   </div>
                   <div className="curation-total-badge">
-                    R$ {Number(currentReceipt.totalAmount || 0).toFixed(2).replace('.', ',')}
+                    R$ {formatReceiptTotal(currentReceipt)}
                   </div>
                 </div>
 
-                {receipt.sourceUrl && (
+                {sourceUrl && (
                   <div className="curation-link-row">
-                    <a href={receipt.sourceUrl} target="_blank" rel="noopener noreferrer" className="fazenda-link">
+                    <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="fazenda-link">
                       <ExternalLink size={16} />
                       <span>Conferir Nota Original na Fazenda / SEFAZ</span>
                     </a>
                   </div>
                 )}
 
-                {/* Tabela de Itens com Normalização */}
+                {/* Tabela de Itens com Normalização Expandida */}
                 <div className="curation-items-table-wrapper">
                   <table className="curation-items-table">
                     <thead>
@@ -254,27 +331,33 @@ export default function AdminCuration() {
                       </tr>
                     </thead>
                     <tbody>
-                      {currentReceipt.items?.map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="raw-name-cell">{item.originalName}</td>
-                          <td>
-                            {isEditing ? (
-                              <input 
-                                type="text"
-                                className="item-name-edit-input"
-                                value={item.normalizedName || ''}
-                                onChange={(e) => handleItemNameChange(receipt.id, idx, e.target.value)}
-                              />
-                            ) : (
-                              <strong>{item.normalizedName || item.originalName}</strong>
-                            )}
-                          </td>
-                          <td>{item.brand || '-'}</td>
-                          <td><span className="badge-unit">{item.unitMeasure || 'un'}</span></td>
-                          <td>{Number(item.quantity).toFixed(item.unitMeasure === 'kg' ? 3 : 0)}</td>
-                          <td>R$ {Number(item.totalPrice).toFixed(2).replace('.', ',')}</td>
-                        </tr>
-                      ))}
+                      {currentReceipt.items?.map((item, idx) => {
+                        const origName = item.originalName || item.original_name || '-';
+                        const normName = item.normalizedName || item.normalized_name || origName;
+                        const unit = (item.unitMeasure || item.unit_measure || 'un').toLowerCase();
+
+                        return (
+                          <tr key={idx}>
+                            <td className="raw-name-cell">{origName}</td>
+                            <td>
+                              {isEditing ? (
+                                <input 
+                                  type="text"
+                                  className="item-name-edit-input"
+                                  value={item.normalizedName || item.normalized_name || ''}
+                                  onChange={(e) => handleItemNameChange(receipt.id, idx, e.target.value)}
+                                />
+                              ) : (
+                                <strong>{normName}</strong>
+                              )}
+                            </td>
+                            <td>{item.brand || '-'}</td>
+                            <td><span className="badge-unit">{unit}</span></td>
+                            <td>{formatQuantity(item.quantity, unit)}</td>
+                            <td>R$ {formatItemTotal(item)}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -285,7 +368,7 @@ export default function AdminCuration() {
                     {!isEditing ? (
                       <button 
                         className="btn-edit-curation"
-                        onClick={() => setEditingReceipt(JSON.parse(JSON.stringify(receipt)))}
+                        onClick={() => handleStartEditing(receipt)}
                       >
                         Ajustar Nomes
                       </button>
