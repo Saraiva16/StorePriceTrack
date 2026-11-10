@@ -1,8 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Receipt, PiggyBank, Pencil, User, Check, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import {
+  ArrowRight,
+  Receipt,
+  PiggyBank,
+  Pencil,
+  User,
+  Check,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  Wallet,
+  TrendingUp,
+  ShoppingCart,
+  PartyPopper,
+  Calendar,
+  Plane,
+  Compass,
+  FileSpreadsheet
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/Auth/AuthContext';
 import NotificationBell from '../components/NotificationBell/NotificationBell';
+import { fetchMonthlySummary, fetchMonthlyTransactions } from '../services/FinanceService';
+import { formatCurrency } from '../utils/currency';
 import './Home.css';
 
 const DEFAULT_CARDS_VISIBILITY = {
@@ -16,6 +36,11 @@ const DEFAULT_CARDS_VISIBILITY = {
 export default function Home() {
   const [shoppingList, setShoppingList] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [summaryData, setSummaryData] = useState({
+    lastPurchaseAmount: null,
+    monthlyExpenses: null,
+    loading: true
+  });
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -65,6 +90,64 @@ export default function Home() {
       const savedList = localStorage.getItem('shoppingList');
       if (savedList) setShoppingList(JSON.parse(savedList));
     }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSummaryMetrics = async () => {
+      try {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth() + 1;
+
+        const [summaryResult, txResult] = await Promise.allSettled([
+          fetchMonthlySummary(currentYear, currentMonth),
+          fetchMonthlyTransactions(currentYear, currentMonth)
+        ]);
+
+        if (!isMounted) return;
+
+        let totalMonthExpense = 0;
+        if (summaryResult.status === 'fulfilled' && summaryResult.value) {
+          totalMonthExpense = summaryResult.value.totalExpense ?? 0;
+        }
+
+        let lastExpense = 0;
+        if (txResult.status === 'fulfilled' && Array.isArray(txResult.value) && txResult.value.length > 0) {
+          const expenseList = txResult.value.filter((item) => item.type === 'EXPENSE');
+          if (expenseList.length > 0) {
+            expenseList.sort((a, b) => {
+              const dateA = new Date(a.transactionDate || a.createdAt).getTime();
+              const dateB = new Date(b.transactionDate || b.createdAt).getTime();
+              return dateB - dateA;
+            });
+            lastExpense = expenseList[0].amount ?? 0;
+          }
+        }
+
+        setSummaryData({
+          lastPurchaseAmount: lastExpense,
+          monthlyExpenses: totalMonthExpense,
+          loading: false
+        });
+      } catch (err) {
+        console.error('Falha ao carregar métricas da home:', err);
+        if (isMounted) {
+          setSummaryData({
+            lastPurchaseAmount: 0,
+            monthlyExpenses: 0,
+            loading: false
+          });
+        }
+      }
+    };
+
+    loadSummaryMetrics();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const toggleCardVisibility = (cardKey) => {
@@ -120,157 +203,176 @@ export default function Home() {
         </div>
       )}
 
-      {/* Financial Control Card */}
-      {(visibleCards.finance || isEditing) && (
-        <div
-          className={`main-card finance-theme ${!visibleCards.finance && isEditing ? 'card-disabled' : ''}`}
-          onClick={() => !isEditing && navigate('/finance')}
-          style={{ cursor: isEditing ? 'default' : 'pointer' }}
-        >
-          {isEditing && (
-            <button
-              type="button"
-              className="card-visibility-toggle"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleCardVisibility('finance');
-              }}
-              aria-label={visibleCards.finance ? 'Ocultar card financeiro' : 'Exibir card financeiro'}
-            >
-              {visibleCards.finance ? <Eye size={18} /> : <EyeOff size={18} />}
-            </button>
-          )}
-          <div className="card-content">
-            <div className="icon-group">
-              <span className="emoji-icon">💰</span>
-              <span className="emoji-icon">📈</span>
+      {/* Grid de Cards 2 em 2 */}
+      <div className="main-cards-grid">
+        {/* Financial Control Card */}
+        {(visibleCards.finance || isEditing) && (
+          <div
+            className={`main-card finance-theme ${!visibleCards.finance && isEditing ? 'card-disabled' : ''}`}
+            onClick={() => !isEditing && navigate('/finance')}
+            style={{ cursor: isEditing ? 'default' : 'pointer' }}
+          >
+            {isEditing && (
+              <button
+                type="button"
+                className="card-visibility-toggle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleCardVisibility('finance');
+                }}
+                aria-label={visibleCards.finance ? 'Ocultar card financeiro' : 'Exibir card financeiro'}
+              >
+                {visibleCards.finance ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            )}
+            <div className="card-content">
+              <div className="icon-group">
+                <div className="icon-badge">
+                  <Wallet size={20} color="#ffffff" />
+                </div>
+                <div className="icon-badge">
+                  <TrendingUp size={20} color="#ffffff" />
+                </div>
+              </div>
+              <div className="text-content">
+                <h2>Controle<br/>Financeiro</h2>
+                <p>Gerencie despesas, receitas e faturas de cartão.</p>
+              </div>
             </div>
-            <div className="text-content">
-              <h2>Controle<br/>Financeiro</h2>
-              <p>Gerencie despesas, receitas e faturas de cartão.</p>
-            </div>
+            {!isEditing && (
+              <div className="arrow-container">
+                <ArrowRight size={20} color="white" />
+              </div>
+            )}
           </div>
-          {!isEditing && (
-            <div className="arrow-container">
-              <ArrowRight size={32} color="white" />
-            </div>
-          )}
-        </div>
-      )}
+        )}
 
-      {/* Main Action Card */}
-      {(visibleCards.estimate || isEditing) && (
-        <div
-          className={`main-card ${!visibleCards.estimate && isEditing ? 'card-disabled' : ''}`}
-          onClick={() => !isEditing && navigate('/estimate')}
-          style={{ cursor: isEditing ? 'default' : 'pointer' }}
-        >
-          {isEditing && (
-            <button
-              type="button"
-              className="card-visibility-toggle"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleCardVisibility('estimate');
-              }}
-              aria-label={visibleCards.estimate ? 'Ocultar card de compras' : 'Exibir card de compras'}
-            >
-              {visibleCards.estimate ? <Eye size={18} /> : <EyeOff size={18} />}
-            </button>
-          )}
-          <div className="card-content">
-            <div className="icon-group">
-              <span className="emoji-icon">🛒</span>
-              <span className="emoji-icon">📝</span>
+        {/* Main Action Card (Estimate) */}
+        {(visibleCards.estimate || isEditing) && (
+          <div
+            className={`main-card ${!visibleCards.estimate && isEditing ? 'card-disabled' : ''}`}
+            onClick={() => !isEditing && navigate('/estimate')}
+            style={{ cursor: isEditing ? 'default' : 'pointer' }}
+          >
+            {isEditing && (
+              <button
+                type="button"
+                className="card-visibility-toggle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleCardVisibility('estimate');
+                }}
+                aria-label={visibleCards.estimate ? 'Ocultar card de compras' : 'Exibir card de compras'}
+              >
+                {visibleCards.estimate ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            )}
+            <div className="card-content">
+              <div className="icon-group">
+                <div className="icon-badge">
+                  <ShoppingCart size={20} color="#ffffff" />
+                </div>
+                <div className="icon-badge">
+                  <FileSpreadsheet size={20} color="#ffffff" />
+                </div>
+              </div>
+              <div className="text-content">
+                <h2>Estimar<br/>Próxima<br/>Compra</h2>
+                <p>Faça sua lista e preveja o gasto.</p>
+              </div>
             </div>
-            <div className="text-content">
-              <h2>Estimar<br/>Próxima<br/>Compra</h2>
-              <p>Faça sua lista e preveja o gasto.</p>
-            </div>
+            {!isEditing && (
+              <div className="arrow-container">
+                <ArrowRight size={20} color="white" />
+              </div>
+            )}
           </div>
-          {!isEditing && (
-            <div className="arrow-container">
-              <ArrowRight size={32} color="white" />
-            </div>
-          )}
-        </div>
-      )}
+        )}
 
-      {/* Event Planning Card */}
-      {(visibleCards.event || isEditing) && (
-        <div
-          className={`main-card event-theme ${!visibleCards.event && isEditing ? 'card-disabled' : ''}`}
-          onClick={() => !isEditing && navigate('/event')}
-          style={{ cursor: isEditing ? 'default' : 'pointer' }}
-        >
-          {isEditing && (
-            <button
-              type="button"
-              className="card-visibility-toggle"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleCardVisibility('event');
-              }}
-              aria-label={visibleCards.event ? 'Ocultar card de evento' : 'Exibir card de evento'}
-            >
-              {visibleCards.event ? <Eye size={18} /> : <EyeOff size={18} />}
-            </button>
-          )}
-          <div className="card-content">
-            <div className="icon-group">
-              <span className="emoji-icon">🎉</span>
-              <span className="emoji-icon">📅</span>
+        {/* Event Planning Card */}
+        {(visibleCards.event || isEditing) && (
+          <div
+            className={`main-card event-theme ${!visibleCards.event && isEditing ? 'card-disabled' : ''}`}
+            onClick={() => !isEditing && navigate('/event')}
+            style={{ cursor: isEditing ? 'default' : 'pointer' }}
+          >
+            {isEditing && (
+              <button
+                type="button"
+                className="card-visibility-toggle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleCardVisibility('event');
+                }}
+                aria-label={visibleCards.event ? 'Ocultar card de evento' : 'Exibir card de evento'}
+              >
+                {visibleCards.event ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            )}
+            <div className="card-content">
+              <div className="icon-group">
+                <div className="icon-badge">
+                  <PartyPopper size={20} color="#ffffff" />
+                </div>
+                <div className="icon-badge">
+                  <Calendar size={20} color="#ffffff" />
+                </div>
+              </div>
+              <div className="text-content">
+                <h2>Planejamento<br/>de Evento</h2>
+                <p>Organize festas e calcule os custos.</p>
+              </div>
             </div>
-            <div className="text-content">
-              <h2>Planejamento<br/>de Evento</h2>
-              <p>Organize festas e calcule os custos.</p>
-            </div>
+            {!isEditing && (
+              <div className="arrow-container">
+                <ArrowRight size={20} color="white" />
+              </div>
+            )}
           </div>
-          {!isEditing && (
-            <div className="arrow-container">
-              <ArrowRight size={32} color="white" />
-            </div>
-          )}
-        </div>
-      )}
+        )}
 
-      {/* Travel Planning Card */}
-      {(visibleCards.trips || isEditing) && (
-        <div
-          className={`main-card travel-theme ${!visibleCards.trips && isEditing ? 'card-disabled' : ''}`}
-          onClick={() => !isEditing && navigate('/trips')}
-          style={{ cursor: isEditing ? 'default' : 'pointer' }}
-        >
-          {isEditing && (
-            <button
-              type="button"
-              className="card-visibility-toggle"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleCardVisibility('trips');
-              }}
-              aria-label={visibleCards.trips ? 'Ocultar card de viagem' : 'Exibir card de viagem'}
-            >
-              {visibleCards.trips ? <Eye size={18} /> : <EyeOff size={18} />}
-            </button>
-          )}
-          <div className="card-content">
-            <div className="icon-group">
-              <span className="emoji-icon">✈️</span>
-              <span className="emoji-icon">🌴</span>
+        {/* Travel Planning Card */}
+        {(visibleCards.trips || isEditing) && (
+          <div
+            className={`main-card travel-theme ${!visibleCards.trips && isEditing ? 'card-disabled' : ''}`}
+            onClick={() => !isEditing && navigate('/trips')}
+            style={{ cursor: isEditing ? 'default' : 'pointer' }}
+          >
+            {isEditing && (
+              <button
+                type="button"
+                className="card-visibility-toggle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleCardVisibility('trips');
+                }}
+                aria-label={visibleCards.trips ? 'Ocultar card de viagem' : 'Exibir card de viagem'}
+              >
+                {visibleCards.trips ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            )}
+            <div className="card-content">
+              <div className="icon-group">
+                <div className="icon-badge">
+                  <Plane size={20} color="#ffffff" />
+                </div>
+                <div className="icon-badge">
+                  <Compass size={20} color="#ffffff" />
+                </div>
+              </div>
+              <div className="text-content">
+                <h2>Planejando<br/>nova viagem</h2>
+                <p>Lista de mercado e divisão de gastos com amigos.</p>
+              </div>
             </div>
-            <div className="text-content">
-              <h2>Planejando<br/>nova viagem</h2>
-              <p>Lista de mercado e divisão de gastos com amigos.</p>
-            </div>
+            {!isEditing && (
+              <div className="arrow-container">
+                <ArrowRight size={20} color="white" />
+              </div>
+            )}
           </div>
-          {!isEditing && (
-            <div className="arrow-container">
-              <ArrowRight size={32} color="white" />
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Quick Summary */}
       {(visibleCards.summary || isEditing) && (
@@ -292,21 +394,25 @@ export default function Home() {
           <div className="summary-cards">
             <div className="summary-card">
               <div className="icon-wrapper">
-                <Receipt size={24} color="var(--text-light)" />
+                <Receipt size={22} color="var(--text-light)" />
               </div>
               <div className="summary-info">
-                <span className="summary-label">Última Compra:</span>
-                <span className="summary-value">R$ 145,50</span>
+                <span className="summary-label">Último Gasto:</span>
+                <span className="summary-value">
+                  {summaryData.loading ? '...' : `R$ ${formatCurrency(summaryData.lastPurchaseAmount)}`}
+                </span>
               </div>
             </div>
 
             <div className="summary-card">
               <div className="icon-wrapper">
-                <PiggyBank size={24} color="var(--text-light)" />
+                <PiggyBank size={22} color="var(--text-light)" />
               </div>
               <div className="summary-info">
                 <span className="summary-label">Total do Mês:</span>
-                <span className="summary-value">R$ 420,00</span>
+                <span className="summary-value">
+                  {summaryData.loading ? '...' : `R$ ${formatCurrency(summaryData.monthlyExpenses)}`}
+                </span>
               </div>
             </div>
           </div>
