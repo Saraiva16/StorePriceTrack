@@ -2,11 +2,14 @@ package com.storepricetrack.store_price_track.modules.auth.controller;
 
 import com.storepricetrack.store_price_track.modules.auth.dto.AuthRequest;
 import com.storepricetrack.store_price_track.modules.auth.dto.AuthResponse;
+import com.storepricetrack.store_price_track.modules.auth.dto.ForgotPasswordRequest;
 import com.storepricetrack.store_price_track.modules.auth.dto.RegisterRequest;
+import com.storepricetrack.store_price_track.modules.auth.dto.ResetPasswordRequest;
 import com.storepricetrack.store_price_track.modules.auth.dto.UserResponse;
 import com.storepricetrack.store_price_track.modules.auth.entity.User;
 import com.storepricetrack.store_price_track.modules.auth.service.AuthService;
 import com.storepricetrack.store_price_track.modules.auth.service.JwtService;
+import com.storepricetrack.store_price_track.modules.auth.service.PasswordResetService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -21,6 +24,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -29,6 +34,7 @@ public class AuthController {
     private final AuthService authService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordResetService passwordResetService;
 
     @Value("${auth.cookie.secure:false}")
     private boolean cookieSecure;
@@ -168,5 +174,31 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.ok(authService.getMe(authentication.getName()));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.processForgotPassword(request.getEmail());
+        return ResponseEntity.ok(Map.of(
+                "message", "Se houver uma conta associada a este e-mail, as instruções de recuperação foram enviadas."
+        ));
+    }
+
+    @GetMapping("/validate-reset-token")
+    public ResponseEntity<Map<String, Object>> validateResetToken(@RequestParam("token") String token) {
+        boolean valid = passwordResetService.validateResetToken(token);
+        return ResponseEntity.ok(Map.of("valid", valid));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        try {
+            passwordResetService.resetPassword(request.getToken(), request.getNewPassword(), passwordEncoder);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Senha redefinida com sucesso. Faça login com suas novas credenciais."
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 }
