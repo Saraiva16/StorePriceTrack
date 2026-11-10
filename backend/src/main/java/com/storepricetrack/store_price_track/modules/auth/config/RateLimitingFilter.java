@@ -64,8 +64,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // Only apply rate limiting to the login endpoint to prevent brute force
-        if (request.getRequestURI().equals("/api/auth/login") && request.getMethod().equalsIgnoreCase("POST")) {
+        // Apply rate limiting to login and forgot-password endpoints to prevent brute force / flooding
+        if ((request.getRequestURI().equals("/api/auth/login") || request.getRequestURI().equals("/api/auth/forgot-password")) && request.getMethod().equalsIgnoreCase("POST")) {
             String ip = extractClientIp(request);
             Bucket bucket = resolveBucket(ip);
 
@@ -73,7 +73,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
             } else {
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-                response.getWriter().write("Too many login attempts. Please try again later.");
+                response.getWriter().write("Too many requests. Please try again later.");
                 return; // Stop filter chain
             }
         } else {

@@ -11,6 +11,7 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const successMessage = location.state?.message;
 
   const from = location.state?.from?.pathname 
     ? `${location.state.from.pathname}${location.state.from.search || ''}` 
@@ -46,6 +47,7 @@ const Login = () => {
       </div>
 
       <form onSubmit={handleSubmit} style={styles.form} className="animate-slide-up">
+        {successMessage && <div style={styles.successBanner}>{successMessage}</div>}
         {error && <div style={styles.errorBanner}>{error}</div>}
 
         <div style={styles.inputGroup}>
@@ -74,6 +76,15 @@ const Login = () => {
             style={styles.input}
             required
           />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-4px', marginBottom: '14px' }}>
+          <span 
+            onClick={() => navigate('/forgot-password', { state: { from: location.state?.from } })} 
+            style={{ color: 'var(--accent-color)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+          >
+            Esqueceu sua senha?
+          </span>
         </div>
 
         <button 
@@ -187,6 +198,15 @@ const styles = {
   errorBanner: {
     backgroundColor: '#ffe5e5',
     color: '#d93025',
+    padding: '12px',
+    borderRadius: '12px',
+    textAlign: 'center',
+    fontSize: '14px',
+    fontWeight: '500'
+  },
+  successBanner: {
+    backgroundColor: '#e6f4ea',
+    color: '#137333',
     padding: '12px',
     borderRadius: '12px',
     textAlign: 'center',
