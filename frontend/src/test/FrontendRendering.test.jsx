@@ -11,9 +11,10 @@ import EstimatePurchase from '../pages/EstimatePurchase';
 // Mock do AuthContext
 vi.mock('../components/Auth/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: 5, username: 'Mateus Saraiva Silva', pixKey: '123' },
+    user: { id: 5, username: 'Mateus Saraiva Silva', email: 'mateus@example.com', pixKey: '123' },
     logout: vi.fn(),
-    updatePixKey: vi.fn()
+    updatePixKey: vi.fn(),
+    updateUserData: vi.fn()
   })
 }));
 

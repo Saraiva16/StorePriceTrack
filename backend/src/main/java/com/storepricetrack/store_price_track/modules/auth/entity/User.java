@@ -21,14 +21,26 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String username;
+
+    @Column(unique = true)
+    private String email;
 
     @Column(nullable = false)
     private String password;
 
     @Column(name = "pix_key", length = 150)
     private String pixKey;
+
+    @Override
+    public String getUsername() {
+        return (email != null && !email.isBlank()) ? email : username;
+    }
+
+    public String getNickname() {
+        return username;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

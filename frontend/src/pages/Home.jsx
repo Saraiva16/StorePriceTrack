@@ -197,6 +197,23 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Banner de preenchimento de perfil (caso o usuário ainda não possua e-mail) */}
+      {user && !user.email && (
+        <div 
+          className="complete-profile-banner"
+          onClick={() => navigate('/profile')}
+          role="button"
+          tabIndex={0}
+          title="Clique para cadastrar seu e-mail"
+        >
+          <div className="complete-profile-content">
+            <span className="complete-profile-title">Termine de preencher seu perfil</span>
+            <span className="complete-profile-desc">Adicione seu e-mail para proteger sua conta e evitar duplicidades.</span>
+          </div>
+          <ArrowRight size={18} className="complete-profile-arrow" />
+        </div>
+      )}
+
       {isEditing && (
         <div className="edit-mode-banner">
           <span>Modo de edição: clique no ícone para ocultar ou exibir cada card.</span>

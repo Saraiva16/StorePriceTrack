@@ -1,6 +1,7 @@
 package com.storepricetrack.store_price_track.modules.auth.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +16,9 @@ public class UpdateProfileRequest {
 
     @NotBlank(message = "O nome de usuário é obrigatório")
     private String username;
+
+    @Email(message = "Informe um e-mail válido")
+    private String email;
 
     @JsonAlias({"pixKey", "pix_key"})
     private String pixKey;

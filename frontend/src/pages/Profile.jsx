@@ -15,7 +15,8 @@ import {
   RefreshCw,
   Sun,
   Moon,
-  Palette
+  Palette,
+  Mail
 } from 'lucide-react';
 import { useAuth } from '../components/Auth/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -28,11 +29,12 @@ import './Profile.css';
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { user, logout, updatePixKey } = useAuth();
+  const { user, logout, updatePixKey, updateUserData } = useAuth();
   const { isDark, toggleTheme } = useTheme();
 
   // Estados dos Dados Cadastrais
   const [username, setUsername] = useState(user?.username || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [pixKey, setPixKey] = useState(user?.pixKey || '');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState('');
@@ -58,6 +60,7 @@ export default function Profile() {
       const data = await fetchUserProfile();
       if (data) {
         setUsername(data.username || '');
+        setEmail(data.email || '');
         setPixKey(data.pixKey || '');
       }
     } catch (err) {
@@ -80,11 +83,14 @@ export default function Profile() {
     try {
       const updated = await updateUserProfile({
         username: username.trim(),
+        email: email.trim(),
         pixKey: pixKey.trim()
       });
 
       setUsername(updated.username);
+      setEmail(updated.email || '');
       setPixKey(updated.pixKey || '');
+      if (updateUserData) updateUserData({ username: updated.username, email: updated.email, pixKey: updated.pixKey });
       if (updatePixKey) updatePixKey(updated.pixKey || '');
 
       setProfileSuccess('Dados cadastrais atualizados com sucesso!');
@@ -107,8 +113,9 @@ export default function Profile() {
       return;
     }
 
-    if (!newPassword || newPassword.length < 6) {
-      setPasswordError('A nova senha deve ter no mínimo 6 caracteres.');
+    const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_\-+=.;:,<>~/\\{}[\]|]).{8,}$/;
+    if (!strongRegex.test(newPassword)) {
+      setPasswordError('A nova senha deve ter no mínimo 8 caracteres, contendo letra maiúscula, minúscula, número e caractere especial.');
       return;
     }
 
@@ -218,16 +225,34 @@ export default function Profile() {
 
         <form onSubmit={handleSaveProfile} className="profile-form">
           <div className="profile-form-group">
-            <label htmlFor="input-username">Nome de Usuário</label>
+            <label htmlFor="input-username">Nome de Usuário / Apelido</label>
             <input 
               id="input-username"
               type="text"
               className="profile-input"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Seu nome no sistema"
+              placeholder="Seu nome ou apelido no sistema"
               required
             />
+          </div>
+
+          <div className="profile-form-group">
+            <label htmlFor="input-email">
+              <Mail size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+              E-mail
+            </label>
+            <input 
+              id="input-email"
+              type="email"
+              className="profile-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="seuemail@exemplo.com"
+            />
+            <span className="profile-input-hint">
+              Utilizado para login único no sistema e segurança da conta.
+            </span>
           </div>
 
           <div className="profile-form-group">

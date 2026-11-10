@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../components/Auth/AuthContext';
-import { UserPlus, Lock, User, ArrowRight } from 'lucide-react';
+import { UserPlus, Lock, User, Mail, ArrowRight, Check, X } from 'lucide-react';
 
 const Register = () => {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,11 +15,27 @@ const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const passwordRules = [
+    { id: 'min', label: 'Pelo menos 8 caracteres', valid: password.length >= 8 },
+    { id: 'upper', label: 'Uma letra maiúscula (A-Z)', valid: /[A-Z]/.test(password) },
+    { id: 'lower', label: 'Uma letra minúscula (a-z)', valid: /[a-z]/.test(password) },
+    { id: 'number', label: 'Um número (0-9)', valid: /\d/.test(password) },
+    { id: 'special', label: 'Um caractere especial (@, $, !, etc.)', valid: /[@$!%*?&#^()_\-+=.;:,<>~/\\{}[\]|]/.test(password) }
+  ];
+
+  const isPasswordStrong = passwordRules.every((r) => r.valid);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
     setSuccess('');
+
+    if (!isPasswordStrong) {
+      setError('Por favor, crie uma senha forte atendendo a todos os requisitos.');
+      setIsLoading(false);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('As senhas não coincidem.');
@@ -32,15 +49,19 @@ const Register = () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ 
+          username: username.trim(), 
+          email: email.trim().toLowerCase(), 
+          password 
+        })
       });
 
       if (res.ok) {
         setSuccess('Cadastro realizado com sucesso! Redirecionando...');
         
-        // Autentica automaticamente o usuário recém-criado
+        // Autentica automaticamente o usuário recém-criado usando o e-mail cadastrado
         try {
-          const loggedIn = await login(username, password);
+          const loggedIn = await login(email.trim().toLowerCase(), password);
           if (loggedIn) {
             const destination = location.state?.from?.pathname 
               ? `${location.state.from.pathname}${location.state.from.search || ''}` 
@@ -52,10 +73,9 @@ const Register = () => {
           console.warn('Erro ao realizar login automático:', authErr);
         }
 
-        // Fallback para login manual caso o auto-login não complete
         navigate('/login', { replace: true, state: { from: location.state?.from } });
       } else {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         setError(data.message || 'Erro ao realizar o cadastro.');
       }
     } catch (err) {
@@ -72,7 +92,7 @@ const Register = () => {
           <UserPlus size={40} color="var(--text-light)" />
         </div>
         <h1 style={styles.title}>Novo Usuário</h1>
-        <p style={styles.subtitle}>Crie uma conta para acessar o sistema</p>
+        <p style={styles.subtitle}>Crie uma conta segura para acessar o sistema</p>
       </div>
 
       <form onSubmit={handleSubmit} style={styles.form} className="animate-slide-up">
@@ -85,9 +105,23 @@ const Register = () => {
           </div>
           <input
             type="text"
-            placeholder="Nome de Usuário"
+            placeholder="Nome ou Apelido"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            style={styles.input}
+            required
+          />
+        </div>
+
+        <div style={styles.inputGroup}>
+          <div style={styles.inputIcon}>
+            <Mail size={20} color="var(--icon-color)" />
+          </div>
+          <input
+            type="email"
+            placeholder="Seu E-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             style={styles.input}
             required
           />
@@ -99,13 +133,31 @@ const Register = () => {
           </div>
           <input
             type="password"
-            placeholder="Senha"
+            placeholder="Senha Forte"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={styles.input}
             required
-            minLength={4}
           />
+        </div>
+
+        {/* Checklist visual de requisitos de senha forte */}
+        <div style={styles.passwordRulesBox}>
+          <span style={styles.passwordRulesTitle}>Requisitos para uma senha forte:</span>
+          <div style={styles.rulesList}>
+            {passwordRules.map((rule) => (
+              <div 
+                key={rule.id} 
+                style={{
+                  ...styles.ruleItem,
+                  color: rule.valid ? '#16a34a' : (password.length > 0 ? '#dc2626' : '#64748b')
+                }}
+              >
+                {rule.valid ? <Check size={14} color="#16a34a" /> : <X size={14} color={password.length > 0 ? '#dc2626' : '#94a3b8'} />}
+                <span>{rule.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div style={styles.inputGroup}>
@@ -119,14 +171,17 @@ const Register = () => {
             onChange={(e) => setConfirmPassword(e.target.value)}
             style={styles.input}
             required
-            minLength={4}
           />
         </div>
 
         <button 
           type="submit" 
-          style={{...styles.submitBtn, opacity: isLoading ? 0.7 : 1}}
-          disabled={isLoading}
+          style={{
+            ...styles.submitBtn, 
+            opacity: isLoading || !isPasswordStrong ? 0.7 : 1,
+            cursor: isLoading || !isPasswordStrong ? 'not-allowed' : 'pointer'
+          }}
+          disabled={isLoading || !isPasswordStrong}
         >
           {isLoading ? 'Cadastrando...' : 'Cadastrar'}
           {!isLoading && <ArrowRight size={20} />}
@@ -157,7 +212,7 @@ const styles = {
   },
   header: {
     textAlign: 'center',
-    marginBottom: '48px',
+    marginBottom: '32px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center'
@@ -170,7 +225,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: '24px',
+    marginBottom: '20px',
     boxShadow: '0 8px 24px rgba(137, 180, 177, 0.4)'
   },
   title: {
@@ -185,7 +240,7 @@ const styles = {
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    gap: '16px',
     animationDelay: '0.1s'
   },
   inputGroup: {
@@ -203,16 +258,42 @@ const styles = {
   },
   input: {
     width: '100%',
-    padding: '18px 16px 18px 48px',
+    padding: '16px 16px 16px 48px',
     borderRadius: '16px',
     border: '2px solid transparent',
     backgroundColor: 'var(--text-light)',
-    fontSize: '16px',
+    fontSize: '15px',
     fontFamily: 'inherit',
     color: 'var(--text-dark)',
     outline: 'none',
     transition: 'border-color 0.3s, box-shadow 0.3s',
     boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+  },
+  passwordRulesBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: '12px',
+    padding: '12px 14px',
+    border: '1px solid #e2e8f0',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  passwordRulesTitle: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#475569'
+  },
+  rulesList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  },
+  ruleItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '12px',
+    transition: 'color 0.2s ease'
   },
   submitBtn: {
     marginTop: '12px',
@@ -220,8 +301,8 @@ const styles = {
     color: 'var(--text-light)',
     border: 'none',
     borderRadius: '16px',
-    padding: '18px',
-    fontSize: '18px',
+    padding: '16px',
+    fontSize: '17px',
     fontWeight: '600',
     display: 'flex',
     alignItems: 'center',
@@ -229,7 +310,7 @@ const styles = {
     cursor: 'pointer',
     fontFamily: 'inherit',
     boxShadow: '0 8px 24px rgba(245, 156, 141, 0.4)',
-    transition: 'transform 0.2s'
+    transition: 'transform 0.2s, opacity 0.2s'
   },
   errorBanner: {
     backgroundColor: '#ffe5e5',

@@ -24,6 +24,9 @@ public class JwtService {
     @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
 
+    @Value("${jwt.refresh-expiration:1209600000}")
+    private long refreshExpiration;
+
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -39,6 +42,22 @@ public class JwtService {
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+
+    public String generateRefreshToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("token_type", "refresh");
+        return buildToken(claims, userDetails, refreshExpiration);
+    }
+
+    public boolean isRefreshTokenValid(String token, UserDetails userDetails) {
+        try {
+            final String username = extractUsername(token);
+            final String tokenType = extractClaim(token, claims -> (String) claims.get("token_type"));
+            return ("refresh".equals(tokenType) && username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
