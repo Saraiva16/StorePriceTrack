@@ -177,4 +177,39 @@ class FinancialTransactionServiceTest {
         assertEquals(1, summary.getExpenseByCategory().size());
         assertEquals(100.0, summary.getExpenseByCategory().get(0).getPercentage());
     }
+
+    @Test
+    @DisplayName("Deve atualizar uma transação existente com novos dados e recalcular invoiceDate")
+    void testUpdateTransaction() {
+        FinancialTransaction existingTx = FinancialTransaction.builder()
+                .id(99L)
+                .user(testUser)
+                .description("Padaria Antiga")
+                .amount(new BigDecimal("20.00"))
+                .type(TransactionType.EXPENSE)
+                .transactionDate(LocalDate.of(2026, 11, 10))
+                .invoiceDate(LocalDate.of(2026, 11, 10))
+                .paymentMethod(PaymentMethod.PIX)
+                .build();
+
+        when(transactionRepository.findByIdAndUserId(99L, 1L)).thenReturn(java.util.Optional.of(existingTx));
+        when(transactionRepository.save(any(FinancialTransaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        FinancialTransactionRequestDto updateDto = FinancialTransactionRequestDto.builder()
+                .description("Padaria Nova")
+                .amount(new BigDecimal("35.50"))
+                .type(TransactionType.EXPENSE)
+                .transactionDate(LocalDate.of(2026, 11, 12))
+                .paymentMethod(PaymentMethod.PIX)
+                .observation("Compra de pães e queijo")
+                .build();
+
+        FinancialTransactionResponseDto response = transactionService.updateTransaction(99L, updateDto, testUser);
+
+        assertNotNull(response);
+        assertEquals("Padaria Nova", response.getDescription());
+        assertEquals(new BigDecimal("35.50"), response.getAmount());
+        assertEquals("Compra de pães e queijo", response.getObservation());
+        verify(transactionRepository, times(1)).save(existingTx);
+    }
 }

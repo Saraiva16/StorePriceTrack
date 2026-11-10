@@ -35,6 +35,7 @@ import {
   fetchMonthlyTransactions,
   fetchMonthlySummary,
   createTransaction,
+  updateTransaction,
   deleteTransaction,
   fetchCreditCards,
   createCreditCard,
@@ -105,6 +106,7 @@ export default function FinanceDashboard() {
 
   // Modais
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
+  const [editingTxId, setEditingTxId] = useState(null);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [editingCardId, setEditingCardId] = useState(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -353,7 +355,38 @@ export default function FinanceDashboard() {
     }
   };
 
-  // Submissão de Transação
+  const openNewTxModal = () => {
+    setEditingTxId(null);
+    setTxType('EXPENSE');
+    setTxDesc('');
+    setTxAmountRaw('');
+    setTxDate(new Date().toISOString().split('T')[0]);
+    setTxPaymentMethod('CREDIT_CARD');
+    setTxCardId(cards.length > 0 ? String(cards[0].id) : '');
+    setTxCategoryId(categories.length > 0 ? String(categories[0].id) : '');
+    setTxInstallments(1);
+    setTxObservation('');
+    setIsTxModalOpen(true);
+  };
+
+  const openEditTxModal = (tx) => {
+    setEditingTxId(tx.id);
+    setTxType(tx.type || 'EXPENSE');
+    setTxDesc(tx.description || '');
+    setTxAmountRaw(maskCurrencyInput(Math.round((Number(tx.amount) || 0) * 100)));
+    const dateFormatted = tx.transactionDate
+      ? String(tx.transactionDate).split('T')[0]
+      : new Date().toISOString().split('T')[0];
+    setTxDate(dateFormatted);
+    setTxPaymentMethod(tx.paymentMethod || 'CREDIT_CARD');
+    setTxCardId(tx.creditCardId ? String(tx.creditCardId) : (cards.length > 0 ? String(cards[0].id) : ''));
+    setTxCategoryId(tx.categoryId ? String(tx.categoryId) : '');
+    setTxInstallments(tx.totalInstallments || 1);
+    setTxObservation(tx.observation || '');
+    setIsTxModalOpen(true);
+  };
+
+  // Submissão de Transação (Criação ou Edição)
   const handleSaveTransaction = async (e) => {
     e.preventDefault();
     const amount = parseCurrencyToNumber(txAmountRaw);
@@ -371,20 +404,35 @@ export default function FinanceDashboard() {
     }
 
     try {
-      await createTransaction({
-        description: txDesc.trim(),
-        amount,
-        type: txType,
-        transactionDate: txDate,
-        paymentMethod: txType === 'INCOME' ? 'PIX' : txPaymentMethod,
-        creditCardId: txType === 'EXPENSE' && txPaymentMethod === 'CREDIT_CARD' ? Number(txCardId) : null,
-        categoryId: txCategoryId ? Number(txCategoryId) : null,
-        totalInstallments: txType === 'EXPENSE' && txPaymentMethod === 'CREDIT_CARD' ? Number(txInstallments) : 1,
-        observation: txObservation.trim() || null
-      });
+      if (editingTxId) {
+        await updateTransaction(editingTxId, {
+          description: txDesc.trim(),
+          amount,
+          type: txType,
+          transactionDate: txDate,
+          paymentMethod: txType === 'INCOME' ? 'PIX' : txPaymentMethod,
+          creditCardId: txType === 'EXPENSE' && txPaymentMethod === 'CREDIT_CARD' ? Number(txCardId) : null,
+          categoryId: txCategoryId ? Number(txCategoryId) : null,
+          observation: txObservation.trim() || null
+        });
+        showToast('Lançamento atualizado com sucesso!');
+      } else {
+        await createTransaction({
+          description: txDesc.trim(),
+          amount,
+          type: txType,
+          transactionDate: txDate,
+          paymentMethod: txType === 'INCOME' ? 'PIX' : txPaymentMethod,
+          creditCardId: txType === 'EXPENSE' && txPaymentMethod === 'CREDIT_CARD' ? Number(txCardId) : null,
+          categoryId: txCategoryId ? Number(txCategoryId) : null,
+          totalInstallments: txType === 'EXPENSE' && txPaymentMethod === 'CREDIT_CARD' ? Number(txInstallments) : 1,
+          observation: txObservation.trim() || null
+        });
+        showToast('Lançamento registrado com sucesso!');
+      }
 
-      showToast('Lançamento registrado com sucesso!');
       setIsTxModalOpen(false);
+      setEditingTxId(null);
       setTxDesc('');
       setTxAmountRaw('');
       setTxObservation('');
@@ -756,7 +804,7 @@ export default function FinanceDashboard() {
                   <h3 className="box-title mb-0">Histórico de Lançamentos</h3>
                   <button
                     className="add-tx-full-btn"
-                    onClick={() => setIsTxModalOpen(true)}
+                    onClick={openNewTxModal}
                   >
                     <Plus size={16} /> Novo Lançamento
                   </button>
@@ -768,7 +816,7 @@ export default function FinanceDashboard() {
                     <p>Nenhum lançamento encontrado neste mês.</p>
                     <button
                       className="cta-btn"
-                      onClick={() => setIsTxModalOpen(true)}
+                      onClick={openNewTxModal}
                     >
                       Registrar Primeiro Lançamento
                     </button>
@@ -816,13 +864,24 @@ export default function FinanceDashboard() {
                           </div>
                         </div>
 
-                        <button
-                          className="delete-tx-btn"
-                          onClick={() => setTxToDelete(tx)}
-                          aria-label={`Excluir lançamento ${tx.description}`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="tx-actions">
+                          <button
+                            className="edit-tx-btn"
+                            onClick={() => openEditTxModal(tx)}
+                            aria-label={`Editar lançamento ${tx.description}`}
+                            title="Editar lançamento"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            className="delete-tx-btn"
+                            onClick={() => setTxToDelete(tx)}
+                            aria-label={`Excluir lançamento ${tx.description}`}
+                            title="Excluir lançamento"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -953,7 +1012,7 @@ export default function FinanceDashboard() {
           {/* Botão Central FAB */}
           <button
             className="finance-bar-fab"
-            onClick={() => setIsTxModalOpen(true)}
+            onClick={openNewTxModal}
             aria-label="Adicionar novo lançamento"
           >
             <div className="finance-bar-fab-inner">
@@ -981,12 +1040,12 @@ export default function FinanceDashboard() {
         </div>
       </footer>
 
-      {/* MODAL: NOVO LANÇAMENTO */}
+      {/* MODAL: NOVO / EDITAR LANÇAMENTO */}
       {isTxModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsTxModalOpen(false)}>
           <div className="modal-card animate-scale-up" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Novo Lançamento</h2>
+              <h2>{editingTxId ? 'Editar Lançamento' : 'Novo Lançamento'}</h2>
               <button className="icon-btn-close" onClick={() => setIsTxModalOpen(false)}>
                 <X size={20} />
               </button>
@@ -1129,24 +1188,26 @@ export default function FinanceDashboard() {
                         </select>
                       </div>
 
-                      <div className="form-group">
-                        <label htmlFor="tx-installments">Parcelamento</label>
-                        <select
-                          id="tx-installments"
-                          value={txInstallments}
-                          onChange={(e) => setTxInstallments(Number(e.target.value))}
-                        >
-                          <option value={1}>1x (À vista na fatura)</option>
-                          {Array.from({ length: 23 }, (_, i) => i + 2).map((n) => (
-                            <option key={n} value={n}>
-                              {n}x de R${' '}
-                              {txAmountRaw
-                                ? formatCurrency(parseCurrencyToNumber(txAmountRaw) / n)
-                                : '0,00'}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      {!editingTxId && (
+                        <div className="form-group">
+                          <label htmlFor="tx-installments">Parcelamento</label>
+                          <select
+                            id="tx-installments"
+                            value={txInstallments}
+                            onChange={(e) => setTxInstallments(Number(e.target.value))}
+                          >
+                            <option value={1}>1x (À vista na fatura)</option>
+                            {Array.from({ length: 23 }, (_, i) => i + 2).map((n) => (
+                              <option key={n} value={n}>
+                                {n}x de R${' '}
+                                {txAmountRaw
+                                  ? formatCurrency(parseCurrencyToNumber(txAmountRaw) / n)
+                                  : '0,00'}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     </>
                   )}
                 </>
@@ -1173,7 +1234,7 @@ export default function FinanceDashboard() {
                   Cancelar
                 </button>
                 <button type="submit" className="btn-primary">
-                  Salvar Lançamento
+                  {editingTxId ? 'Salvar Alterações' : 'Salvar Lançamento'}
                 </button>
               </div>
             </form>
