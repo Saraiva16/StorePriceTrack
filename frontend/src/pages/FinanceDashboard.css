@@ -492,6 +492,13 @@
   font-weight: 500;
 }
 
+.tx-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.edit-tx-btn,
 .delete-tx-btn {
   background: none;
   border: none;
@@ -502,11 +509,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s;
+  transition: all 0.2s ease;
+}
+
+.edit-tx-btn:hover {
+  color: #0284c7;
+  background-color: #f0f9ff;
 }
 
 .delete-tx-btn:hover {
   color: #e11d48;
+  background-color: #fff1f2;
 }
 
 /* Credit Cards View */

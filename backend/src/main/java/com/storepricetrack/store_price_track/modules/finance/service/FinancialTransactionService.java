@@ -186,6 +186,40 @@ public class FinancialTransactionService {
     }
 
     @Transactional
+    public FinancialTransactionResponseDto updateTransaction(Long id, FinancialTransactionRequestDto dto, User user) {
+        FinancialTransaction tx = transactionRepository.findByIdAndUserId(id, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transação não encontrada"));
+
+        CreditCard card = null;
+        if (dto.getPaymentMethod() == PaymentMethod.CREDIT_CARD) {
+            if (dto.getCreditCardId() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Para compras no cartão, selecione um cartão cadastrado");
+            }
+            card = creditCardService.findCardEntityOrThrow(dto.getCreditCardId(), user.getId());
+        }
+
+        FinancialCategory category = null;
+        if (dto.getCategoryId() != null) {
+            category = categoryService.findCategoryEntityOrThrow(dto.getCategoryId(), user.getId());
+        }
+
+        LocalDate invoiceDate = calculateInvoiceDate(dto.getTransactionDate(), card);
+
+        tx.setDescription(dto.getDescription().trim());
+        tx.setAmount(dto.getAmount());
+        tx.setType(dto.getType());
+        tx.setTransactionDate(dto.getTransactionDate());
+        tx.setInvoiceDate(invoiceDate);
+        tx.setPaymentMethod(dto.getPaymentMethod());
+        tx.setCreditCard(card);
+        tx.setCategory(category);
+        tx.setObservation(dto.getObservation());
+
+        FinancialTransaction saved = transactionRepository.save(tx);
+        return toResponseDto(saved);
+    }
+
+    @Transactional
     public void deleteTransaction(Long id, boolean deleteAllInstallments, User user) {
         FinancialTransaction tx = transactionRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transação não encontrada"));

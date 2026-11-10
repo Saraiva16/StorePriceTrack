@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ShoppingCart, CheckCircle, CalendarDays, Plus, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ShoppingCart, CheckCircle, CalendarDays, Plus, Loader2, ChevronDown, ChevronUp, Tag } from 'lucide-react';
 import { fetchActiveCart, addItemToCart, closeCart } from '../services/ShoppingListService';
 import { fetchProducts } from '../services/EstimateService';
 import './ShoppingCart.css';
@@ -11,10 +11,32 @@ export default function ShoppingCartPage() {
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
+    const [collapsedSections, setCollapsedSections] = useState({});
 
     useEffect(() => {
         loadInitialData();
     }, []);
+
+    const groupedCategories = useMemo(() => {
+        if (!cart?.items || !Array.isArray(cart.items) || cart.items.length === 0) {
+            return {};
+        }
+        return cart.items.reduce((acc, item) => {
+            const categoryName = item.product?.category?.name || item.product?.category || 'Outros';
+            if (!acc[categoryName]) {
+                acc[categoryName] = [];
+            }
+            acc[categoryName].push(item);
+            return acc;
+        }, {});
+    }, [cart?.items]);
+
+    const toggleSection = (categoryName) => {
+        setCollapsedSections(prev => ({
+            ...prev,
+            [categoryName]: !prev[categoryName]
+        }));
+    };
 
     const loadInitialData = async () => {
         setLoading(true);
@@ -133,19 +155,52 @@ export default function ShoppingCartPage() {
                             <p>Seu carrinho está vazio.</p>
                         </div>
                     ) : (
-                        <ul className="cart-item-list">
-                            {cart.items.map(item => (
-                                <li key={item.id} className="cart-item">
-                                    <div className="item-details">
-                                        <span className="item-name">{item.product.normalizedName}</span>
-                                        <span className="item-category">{item.product.category?.name || 'Outros'}</span>
+                        <div className="cart-sections-container">
+                            {Object.entries(groupedCategories).map(([categoryName, items]) => {
+                                const isCollapsed = Boolean(collapsedSections[categoryName]);
+                                const totalUnits = items.reduce((sum, i) => sum + (Number(i.quantity) || 1), 0);
+
+                                return (
+                                    <div key={categoryName} className="cart-category-group">
+                                        <button
+                                            type="button"
+                                            className="cart-category-header"
+                                            onClick={() => toggleSection(categoryName)}
+                                            aria-expanded={!isCollapsed}
+                                        >
+                                            <div className="category-header-info">
+                                                <div className="category-header-badge">
+                                                    <Tag size={15} />
+                                                </div>
+                                                <span className="category-header-title">{categoryName}</span>
+                                                <span className="category-header-count">
+                                                    {items.length} {items.length === 1 ? 'item' : 'itens'} ({totalUnits} un)
+                                                </span>
+                                            </div>
+                                            <div className="category-header-icon">
+                                                {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                                            </div>
+                                        </button>
+
+                                        {!isCollapsed && (
+                                            <ul className="cart-item-list">
+                                                {items.map(item => (
+                                                    <li key={item.id} className="cart-item">
+                                                        <div className="item-details">
+                                                            <span className="item-name">{item.product?.normalizedName || item.product?.name}</span>
+                                                            <span className="item-category">{categoryName}</span>
+                                                        </div>
+                                                        <div className="item-quantity">
+                                                            Qtd: {item.quantity}
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
                                     </div>
-                                    <div className="item-quantity">
-                                        Qtd: {item.quantity}
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
+                                );
+                            })}
+                        </div>
                     )}
 
                     <div className="cart-actions">

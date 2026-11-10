@@ -68,17 +68,58 @@
   animation: fadeIn 0.2s ease;
 }
 
+.complete-profile-banner {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+  border-radius: var(--border-radius-md, 12px);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.complete-profile-banner:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.12);
+}
+
+.complete-profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.complete-profile-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.complete-profile-desc {
+  font-size: 11px;
+  color: #b45309;
+}
+
+.complete-profile-arrow {
+  color: #b45309;
+  flex-shrink: 0;
+}
+
 .card-visibility-toggle {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 10px;
+  right: 10px;
   z-index: 5;
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.9);
   color: #1e293b;
   border: none;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -115,28 +156,49 @@
   justify-content: space-between;
 }
 
+.main-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 480px) {
+  .main-cards-grid {
+    gap: 10px;
+  }
+}
+
 .main-card {
-  background-color: var(--card-primary-bg);
-  border-radius: var(--border-radius-lg);
-  padding: 32px 24px;
-  color: var(--text-light);
+  background-color: var(--card-primary-bg, #2b3a4a);
+  border-radius: var(--border-radius-lg, 16px);
+  padding: 18px 14px;
+  color: var(--text-light, #ffffff);
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-md);
-  margin-bottom: 24px; /* Reduced from 40px to fit both cards better */
-  transition: transform 0.2s ease;
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.08));
+  margin-bottom: 0;
+  min-height: 175px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.main-card.estimate-theme {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
 }
 
 .main-card.event-theme {
-  background-color: #c4b5fd; /* Pastel purple */
+  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
 }
 
 .main-card.travel-theme {
-  background: linear-gradient(135deg, #e07a5f 0%, #f4a261 100%);
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
 }
 
 .main-card.finance-theme {
-  background: linear-gradient(135deg, #10b981 0%, #0f766e 100%);
+  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
 }
 
 .main-card:active {
@@ -146,32 +208,58 @@
 .card-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
   position: relative;
   z-index: 2;
+  height: 100%;
 }
 
 .icon-group {
   display: flex;
-  gap: 8px;
-  font-size: 32px;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.icon-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .text-content h2 {
-  font-size: 32px;
-  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 4px 0;
+  color: #ffffff;
 }
 
 .text-content p {
-  font-size: 16px;
+  font-size: 11px;
+  line-height: 1.35;
   opacity: 0.9;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .arrow-container {
   position: absolute;
-  bottom: 24px;
-  right: 24px;
+  bottom: 12px;
+  right: 12px;
   z-index: 2;
+  opacity: 0.8;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.main-card:hover .arrow-container {
+  opacity: 1;
+  transform: translateX(3px);
 }
 
 /* Quick Summary Section */

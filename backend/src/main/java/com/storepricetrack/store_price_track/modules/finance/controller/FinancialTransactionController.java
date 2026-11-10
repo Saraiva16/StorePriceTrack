@@ -56,6 +56,15 @@ public class FinancialTransactionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.createTransaction(dto, user));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<FinancialTransactionResponseDto> updateTransaction(
+            @PathVariable Long id,
+            @Valid @RequestBody FinancialTransactionRequestDto dto,
+            @AuthenticationPrincipal User user
+    ) {
+        return ResponseEntity.ok(transactionService.updateTransaction(id, dto, user));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTransaction(
             @PathVariable Long id,

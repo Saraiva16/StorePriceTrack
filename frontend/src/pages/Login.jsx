@@ -54,7 +54,7 @@ const Login = () => {
           </div>
           <input
             type="text"
-            placeholder="Nome de Usuário"
+            placeholder="E-mail ou Usuário"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             style={styles.input}

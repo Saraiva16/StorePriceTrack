@@ -21,7 +21,8 @@ public class UserService {
         return userRepository.findAll().stream()
                 .map(u -> UserResponse.builder()
                         .id(u.getId())
-                        .username(u.getUsername())
+                        .username(u.getNickname())
+                        .email(u.getEmail())
                         .pixKey(u.getPixKey())
                         .build())
                 .collect(Collectors.toList());
@@ -71,7 +72,8 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
         return UserResponse.builder()
                 .id(user.getId())
-                .username(user.getUsername())
+                .username(user.getNickname())
+                .email(user.getEmail())
                 .pixKey(user.getPixKey())
                 .build();
     }
@@ -81,11 +83,16 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
 
         if (request.getUsername() != null && !request.getUsername().isBlank()) {
-            String newUsername = request.getUsername().trim();
-            if (!user.getUsername().equals(newUsername) && userRepository.findByUsername(newUsername).isPresent()) {
-                throw new IllegalArgumentException("Este nome de usuário já está em uso.");
+            user.setUsername(request.getUsername().trim());
+        }
+
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            String newEmail = request.getEmail().trim().toLowerCase();
+            var existingUser = userRepository.findByEmailIgnoreCase(newEmail);
+            if (existingUser.isPresent() && !existingUser.get().getId().equals(user.getId())) {
+                throw new IllegalArgumentException("Este e-mail já está em uso por outro usuário.");
             }
-            user.setUsername(newUsername);
+            user.setEmail(newEmail);
         }
 
         if (request.getPixKey() != null) {
@@ -97,7 +104,8 @@ public class UserService {
 
         return UserResponse.builder()
                 .id(user.getId())
-                .username(user.getUsername())
+                .username(user.getNickname())
+                .email(user.getEmail())
                 .pixKey(user.getPixKey())
                 .build();
     }
@@ -114,8 +122,8 @@ public class UserService {
             throw new IllegalArgumentException("A senha atual informada está incorreta.");
         }
 
-        if (request.getNewPassword() == null || request.getNewPassword().trim().length() < 6) {
-            throw new IllegalArgumentException("A nova senha deve ter no mínimo 6 caracteres.");
+        if (request.getNewPassword() == null || !com.storepricetrack.store_price_track.modules.auth.validation.PasswordValidator.isStrong(request.getNewPassword())) {
+            throw new IllegalArgumentException(com.storepricetrack.store_price_track.modules.auth.validation.PasswordValidator.STRONG_PASSWORD_MESSAGE);
         }
 
         if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {

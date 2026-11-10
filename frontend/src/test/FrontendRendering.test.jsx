@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import TripList from '../pages/TripList';
 import Profile from '../pages/Profile';
@@ -11,9 +11,10 @@ import EstimatePurchase from '../pages/EstimatePurchase';
 // Mock do AuthContext
 vi.mock('../components/Auth/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: 5, username: 'Mateus Saraiva Silva', pixKey: '123' },
+    user: { id: 5, username: 'Mateus Saraiva Silva', email: 'mateus@example.com', pixKey: '123' },
     logout: vi.fn(),
-    updatePixKey: vi.fn()
+    updatePixKey: vi.fn(),
+    updateUserData: vi.fn()
   })
 }));
 
@@ -124,6 +125,7 @@ vi.mock('../services/FinanceService', () => ({
     { id: 9, name: 'Salário', type: 'INCOME', color: '#2ecc71', icon: 'Briefcase', custom: false }
   ]),
   createTransaction: vi.fn(),
+  updateTransaction: vi.fn().mockResolvedValue({ id: 1 }),
   deleteTransaction: vi.fn(),
   createCreditCard: vi.fn(),
   deleteCreditCard: vi.fn(),
@@ -304,5 +306,28 @@ describe('Validação de Renderização de Telas Frontend', () => {
     const marketOptions = await findAllByText('Supermercado Extra');
     expect(marketOptions.length).toBeGreaterThanOrEqual(1);
     expect(await findByText('Fechar carrinho?')).toBeInTheDocument();
+  });
+
+  it('deve permitir abrir o modal de edição ao clicar no ícone de lápis em um lançamento', async () => {
+    const { findByText, findByDisplayValue } = render(
+      <BrowserRouter>
+        <FinanceDashboard />
+      </BrowserRouter>
+    );
+
+    // Clica na aba de Lançamentos
+    const txTabs = await screen.findAllByText(/Lançamentos/i);
+    expect(txTabs.length).toBeGreaterThanOrEqual(1);
+    fireEvent.click(txTabs[0]);
+
+    // Encontra o botão de editar do lançamento
+    const editBtn = await screen.findByRole('button', { name: /Editar lançamento Supermercado Central/i });
+    fireEvent.click(editBtn);
+
+    // Valida que o modal abriu com título Editar Lançamento e valor preenchido
+    expect(await findByText('Editar Lançamento')).toBeInTheDocument();
+    expect(await findByDisplayValue('800,00')).toBeInTheDocument();
+    expect(await findByDisplayValue('Supermercado Central')).toBeInTheDocument();
+    expect(await findByText('Salvar Alterações')).toBeInTheDocument();
   });
 });

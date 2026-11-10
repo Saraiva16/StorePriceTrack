@@ -96,6 +96,31 @@ export const createTransaction = async (transactionData) => {
   return await res.json();
 };
 
+export const updateTransaction = async (id, transactionData) => {
+  const payload = {
+    description: transactionData.description,
+    amount: transactionData.amount,
+    type: transactionData.type,
+    transaction_date: transactionData.transactionDate || transactionData.transaction_date,
+    payment_method: transactionData.paymentMethod || transactionData.payment_method,
+    credit_card_id: transactionData.creditCardId || transactionData.credit_card_id,
+    category_id: transactionData.categoryId || transactionData.category_id,
+    observation: transactionData.observation
+  };
+
+  const res = await fetch(`${API_BASE}/transactions/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+    ...fetchOptions
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(errorData?.message || 'Erro ao atualizar lançamento.');
+  }
+  return await res.json();
+};
+
 export const deleteTransaction = async (id, deleteAllInstallments = false) => {
   const url = `${API_BASE}/transactions/${id}?deleteAllInstallments=${deleteAllInstallments}`;
   const res = await fetch(url, {

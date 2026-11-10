@@ -19,9 +19,9 @@ export async function fetchUserProfile() {
 }
 
 /**
- * Atualiza nome de usuário e chave Pix do usuário logado
+ * Atualiza nome de usuário, e-mail e chave Pix do usuário logado
  */
-export async function updateUserProfile({ username, pixKey }) {
+export async function updateUserProfile({ username, email, pixKey }) {
   const res = await fetch(`${API_BASE}/profile`, {
     method: 'PUT',
     headers: {
@@ -30,6 +30,7 @@ export async function updateUserProfile({ username, pixKey }) {
     },
     body: JSON.stringify({ 
       username, 
+      email,
       pixKey, 
       pix_key: pixKey 
     })
